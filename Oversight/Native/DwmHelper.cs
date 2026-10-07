@@ -52,10 +52,10 @@ internal static class DwmHelper
     private static int Colorref(byte r, byte g, byte b) => r | (g << 8) | (b << 16);
 
     // Caption (title-bar) + caption-text colours, matched to the WPF palette.
-    private static readonly int ColCaptionDark  = Colorref(0x11, 0x11, 0x11); // #111111
-    private static readonly int ColTextDark     = Colorref(0xDD, 0xDD, 0xDD); // #DDDDDD
-    private static readonly int ColCaptionLight = Colorref(0xF3, 0xF3, 0xF3); // #F3F3F3
-    private static readonly int ColTextLight    = Colorref(0x1B, 0x1B, 0x1B); // #1B1B1B
+    private static readonly int ColCaptionDark  = Colorref(0x0E, 0x0D, 0x1B); // #0E0D1B (BgBrush, dark)
+    private static readonly int ColTextDark     = Colorref(0xE2, 0xE8, 0xF0); // #E2E8F0 (TextBrush, dark)
+    private static readonly int ColCaptionLight = Colorref(0xF5, 0xF4, 0xFA); // #F5F4FA (BgBrush, light)
+    private static readonly int ColTextLight    = Colorref(0x1E, 0x1B, 0x2E); // #1E1B2E (TextBrush, light)
 
     // ── Public API ────────────────────────────────────────────────────────────
 

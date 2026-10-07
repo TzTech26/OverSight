@@ -34,8 +34,9 @@ if (-not $Iscc) {
 
 Write-Host "==> Publishing self-contained build..." -ForegroundColor Cyan
 if (Test-Path $PublishDir) { Remove-Item $PublishDir -Recurse -Force }
+# -p:Version stamps the exe with the same version as the installer (Oversight.iss is the source of truth).
 dotnet publish $Csproj -c Release -r win-x64 --self-contained true `
-  -p:PublishSingleFile=false -o $PublishDir
+  -p:PublishSingleFile=false -p:Version=$Version -o $PublishDir
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed." }
 
 Write-Host "==> Compiling installer..." -ForegroundColor Cyan

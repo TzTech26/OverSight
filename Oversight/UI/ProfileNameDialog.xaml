@@ -3,99 +3,23 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Oversight"
         Icon="pack://application:,,,/Assets/app.ico"
-        Width="380" SizeToContent="Height"
+        Width="420" SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
-        Background="{DynamicResource BgBrush}"
-        Foreground="{DynamicResource TextBrush}"
-        FontFamily="Segoe UI Variable Display,Segoe UI Variable,Segoe UI,sans-serif"
-        FontSize="13"
-        UseLayoutRounding="True">
+        Style="{StaticResource DialogWindow}">
 
-    <Window.Resources>
-        <Style TargetType="TextBox">
-            <Setter Property="Background"      Value="{DynamicResource SurfaceAltBrush}"/>
-            <Setter Property="Foreground"      Value="{DynamicResource TextBrush}"/>
-            <Setter Property="BorderBrush"     Value="{DynamicResource StrokeStrongBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding"         Value="8,6"/>
-            <Setter Property="CaretBrush"      Value="{DynamicResource AccentTextBrush}"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="Bd" CornerRadius="5"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
-                                          VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource InputBorderHoverBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="Button">
-            <Setter Property="Background"      Value="{DynamicResource ButtonBg}"/>
-            <Setter Property="Foreground"      Value="{DynamicResource TextBrush}"/>
-            <Setter Property="BorderBrush"     Value="{DynamicResource StrokeStrongBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding"         Value="14,6"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="5" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background"  Value="{DynamicResource ButtonHoverBg}"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource InputBorderHoverBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ButtonPressedBg}"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.45"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Background"  Value="{DynamicResource AccentBrush}"/>
-            <Setter Property="Foreground"  Value="{DynamicResource OnAccentBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentBorderBrush}"/>
-        </Style>
-    </Window.Resources>
-
-    <StackPanel Margin="20,18,20,16">
-        <TextBlock x:Name="TxtPrompt" TextWrapping="Wrap" Margin="0,0,0,10"
-                   Foreground="{DynamicResource TextLabelBrush}"/>
-        <TextBox   x:Name="TxtName" KeyDown="TxtName_KeyDown"/>
-        <TextBlock x:Name="TxtError" Foreground="#FFE53935" FontSize="12"
-                   Margin="2,6,0,0" TextWrapping="Wrap" Visibility="Collapsed"/>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="OK"     Click="Ok_Click"     Width="84" Margin="0,0,8,0"
+    <StackPanel Margin="24,20,24,20">
+        <TextBlock x:Name="TxtPrompt" TextWrapping="Wrap" Margin="0,0,0,12"
+                   FontSize="14" Foreground="{DynamicResource TextBrush}"/>
+        <TextBox   x:Name="TxtName" KeyDown="TxtName_KeyDown" AutomationProperties.Name="Name"/>
+        <TextBlock x:Name="TxtError" Foreground="{DynamicResource DangerTextBrush}" FontSize="12.5"
+                   Margin="2,8,0,0" TextWrapping="Wrap" Visibility="Collapsed"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+            <Button Content="Cancel" Click="Cancel_Click" MinWidth="92" IsCancel="True"
+                    Style="{StaticResource GhostButton}" Margin="0,0,8,0"/>
+            <Button Content="OK" Click="Ok_Click" MinWidth="92"
                     Style="{StaticResource AccentButton}"/>
-            <Button Content="Cancel" Click="Cancel_Click" Width="84" IsCancel="True"/>
         </StackPanel>
     </StackPanel>
 </Window>

@@ -5,6 +5,15 @@
     <!--
         ShutdownMode = OnExplicitShutdown because we have no main window —
         the app lives in the system tray and shuts down via the context menu.
+
+        Controls.xaml holds the shared control templates; the colour palette
+        (Themes/Dark.xaml or Light.xaml) is merged in by ThemeManager at startup.
     -->
-    <Application.Resources/>
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>

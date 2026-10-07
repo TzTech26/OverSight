@@ -67,6 +67,24 @@ dotnet publish Oversight/Oversight.csproj -c Release -r win-x64 --self-contained
 
 ---
 
+## Working on the UI
+
+Set `OVERSIGHT_PROFILE` to run an isolated copy beside a normal install — it uses its own
+config folder (`%APPDATA%\Oversight-<profile>`), its own single-instance lock, registers no
+global hotkeys, and opens Settings straight away:
+
+```powershell
+$env:OVERSIGHT_PROFILE = "dev"
+& "$env:LOCALAPPDATA\Oversight_buildind\Debug
+et8.0-windows10.0.22621.0\win-x64\Oversight.exe"
+```
+
+Shared control styles live in `Oversight/Themes/Controls.xaml`; colours are in
+`Themes/Dark.xaml` / `Themes/Light.xaml` (swapped live with the Windows theme). Unhandled
+errors are written to `error.log` in the config folder.
+
+---
+
 ## Installer & releases
 
 Building a distributable installer and managing versioned releases is handled by

@@ -17,6 +17,7 @@ Tooling that turns Oversight into a **downloadable installer** and manages
 | **build-installer.ps1** | Main entry point. Publishes a self-contained build, compiles `Oversight.iss`, then records the result into the release system on the **beta** channel. |
 | **promote-release.ps1** | Promotes a tested build from **beta** to **verified** (the channel you publish from). Usage: `-Version 1.0.0`. |
 | **list-releases.ps1** | Prints a table of every recorded release and the latest version per channel. |
+| **make-brand-assets.ps1** | Regenerates the app icon (`Oversight/Assets/app.ico`, 16–256 px) and the installer wizard images (`assets/*.bmp`) from code. Run it after changing the logo colours or artwork. |
 | **_release-common.ps1** | Shared helper functions, dot-sourced by the scripts above. The leading underscore means "not run directly." |
 
 ## Quick start

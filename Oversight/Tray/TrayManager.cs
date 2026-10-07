@@ -44,7 +44,7 @@ public sealed class TrayManager : IDisposable
 
         _tray = new NotifyIcon
         {
-            Text    = "Oversight",
+            Text    = AppProfile.IsIsolated ? $"Oversight ({AppProfile.Name})" : "Oversight",
             Icon    = _icon,
             Visible = false,
         };
@@ -116,8 +116,8 @@ public sealed class TrayManager : IDisposable
         bool dark = ThemeManager.IsDarkMode;
 
         var menu = new ContextMenuStrip();
-        menu.BackColor = dark ? Color.FromArgb(0x1C, 0x1C, 0x1C) : Color.FromArgb(0xF9, 0xF9, 0xF9);
-        menu.ForeColor = dark ? Color.FromArgb(0xDD, 0xDD, 0xDD) : Color.FromArgb(0x1B, 0x1B, 0x1B);
+        menu.BackColor = dark ? Color.FromArgb(0x15, 0x14, 0x2A) : Color.FromArgb(0xFF, 0xFF, 0xFF);
+        menu.ForeColor = dark ? Color.FromArgb(0xE2, 0xE8, 0xF0) : Color.FromArgb(0x1E, 0x1B, 0x2E);
         menu.Renderer  = new ThemedMenuRenderer(dark);
 
         var itemToggle = new ToolStripMenuItem("Toggle Zoom");
@@ -152,8 +152,8 @@ public sealed class TrayManager : IDisposable
         var root = new ToolStripMenuItem(title);
 
         // The submenu is a separate ToolStripDropDown, so it needs its own colours + renderer.
-        root.DropDown.BackColor = dark ? Color.FromArgb(0x1C, 0x1C, 0x1C) : Color.FromArgb(0xF9, 0xF9, 0xF9);
-        root.DropDown.ForeColor = dark ? Color.FromArgb(0xDD, 0xDD, 0xDD) : Color.FromArgb(0x1B, 0x1B, 0x1B);
+        root.DropDown.BackColor = dark ? Color.FromArgb(0x15, 0x14, 0x2A) : Color.FromArgb(0xFF, 0xFF, 0xFF);
+        root.DropDown.ForeColor = dark ? Color.FromArgb(0xE2, 0xE8, 0xF0) : Color.FromArgb(0x1E, 0x1B, 0x2E);
         root.DropDown.Renderer  = new ThemedMenuRenderer(dark);
 
         foreach (var name in names)
@@ -240,6 +240,8 @@ public sealed class TrayManager : IDisposable
     }
 
     /// <summary>Opens the settings window (creating it if needed) and forces it to the top.</summary>
+    public void OpenSettings() => ShowSettings();
+
     private void ShowSettings()
     {
         if (_settingsWindow is null)
@@ -270,39 +272,12 @@ public sealed class TrayManager : IDisposable
 
     // ── Icon generation ───────────────────────────────────────────────────────
 
-    // Identical artwork to Assets/app.ico (the taskbar/window icon) so the tray,
-    // title bar and taskbar all show the same blue magnifier glass.
+    // Same artwork as the window / taskbar icon (Assets/app.ico), at the tray's small-icon size.
     private static Icon BuildIcon()
     {
-        const int S = 32;
-        using var bmp = new Bitmap(S, S, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-        using var g   = Graphics.FromImage(bmp);
-        g.Clear(Color.Transparent);
-        g.SmoothingMode    = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-        g.PixelOffsetMode  = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-
-        var color = Color.FromArgb(0x00, 0x78, 0xD4);   // Win11 accent blue
-        using var pen  = new Pen(color, 2.8f) { EndCap = System.Drawing.Drawing2D.LineCap.Round };
-        using var fill = new SolidBrush(Color.FromArgb(55, color));
-
-        // Lens circle
-        g.FillEllipse(fill, 2, 2, 20, 20);
-        g.DrawEllipse(pen,  2, 2, 20, 20);
-
-        // Handle
-        using var handlePen = new Pen(color, 3.0f)
-        {
-            StartCap = System.Drawing.Drawing2D.LineCap.Round,
-            EndCap   = System.Drawing.Drawing2D.LineCap.Round,
-        };
-        g.DrawLine(handlePen, 19, 19, 29, 29);
-
-        // Cross-hairs inside lens
-        using var hairPen = new Pen(Color.FromArgb(140, color), 1.2f);
-        g.DrawLine(hairPen, 12, 5,  12, 19);
-        g.DrawLine(hairPen, 5,  12, 19, 12);
-
-        return Icon.FromHandle(bmp.GetHicon());
+        var info = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico"));
+        using var stream = info.Stream;
+        return new Icon(stream, SystemInformation.SmallIconSize);
     }
 
     // ── Themed context menu renderer ──────────────────────────────────────────
@@ -317,8 +292,8 @@ public sealed class TrayManager : IDisposable
         {
             var rc = new Rectangle(Point.Empty, e.Item.Size);
             Color color = e.Item.Selected
-                ? (_dark ? Color.FromArgb(0x2A, 0x82, 0xDA) : Color.FromArgb(0xE5, 0xE5, 0xE5))
-                : (_dark ? Color.FromArgb(0x1C, 0x1C, 0x1C) : Color.FromArgb(0xF9, 0xF9, 0xF9));
+                ? (_dark ? Color.FromArgb(0x7C, 0x3A, 0xED) : Color.FromArgb(0xED, 0xE9, 0xFE))
+                : (_dark ? Color.FromArgb(0x15, 0x14, 0x2A) : Color.FromArgb(0xFF, 0xFF, 0xFF));
             e.Graphics.FillRectangle(new SolidBrush(color), rc);
         }
     }
@@ -331,9 +306,9 @@ public sealed class TrayManager : IDisposable
 
         public ThemedColorTable(bool dark)
         {
-            _bg        = dark ? Color.FromArgb(0x1C, 0x1C, 0x1C) : Color.FromArgb(0xF9, 0xF9, 0xF9);
-            _border    = dark ? Color.FromArgb(0x40, 0x40, 0x40) : Color.FromArgb(0xDA, 0xDA, 0xDA);
-            _separator = dark ? Color.FromArgb(0x33, 0x33, 0x33) : Color.FromArgb(0xE0, 0xE0, 0xE0);
+            _bg        = dark ? Color.FromArgb(0x15, 0x14, 0x2A) : Color.FromArgb(0xFF, 0xFF, 0xFF);
+            _border    = dark ? Color.FromArgb(0x34, 0x31, 0x5A) : Color.FromArgb(0xD5, 0xD0, 0xE6);
+            _separator = dark ? Color.FromArgb(0x24, 0x22, 0x3D) : Color.FromArgb(0xE5, 0xE2, 0xF0);
         }
 
         public override Color MenuBorder                 => _border;

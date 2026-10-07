@@ -23,9 +23,12 @@ namespace Oversight.Services;
 public sealed class ConfigStore
 {
     private static readonly string ConfigDir =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Oversight");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Oversight" + AppProfile.Suffix);
 
     private static readonly string ConfigPath = Path.Combine(ConfigDir, "settings.json");
+
+    /// <summary>The folder holding settings.json (and error.log).</summary>
+    public static string ConfigDirectory => ConfigDir;
 
     private static readonly string LegacyConfigPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ScreenZoom", "settings.json");

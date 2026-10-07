@@ -26,17 +26,32 @@ public partial class SettingsWindow : Window
     // Zoom document
     private ZoomSettings _workingZoom = new();
     private string       _openZoomName = "";
-    private bool         _zoomDirty;
+    private bool _zoomDirty;
+    private bool ZoomDirty
+    {
+        get => _zoomDirty;
+        set { _zoomDirty = value; UpdateDirtyIndicators(); }
+    }
 
     // Crosshair document
     private CrosshairSettings _workingXh = new();
     private string            _openXhName = "";
-    private bool              _xhDirty;
+    private bool _xhDirty;
+    private bool XhDirty
+    {
+        get => _xhDirty;
+        set { _xhDirty = value; UpdateDirtyIndicators(); }
+    }
 
     // Auto-clicker document
     private AutoClickerSettings _workingAc = new();
     private string              _openAcName = "";
-    private bool                _acDirty;
+    private bool _acDirty;
+    private bool AcDirty
+    {
+        get => _acDirty;
+        set { _acDirty = value; UpdateDirtyIndicators(); }
+    }
 
     private bool _loading;               // suppress dirty-marking while populating controls
     private bool _suppressZoomCombo;     // suppress SelectionChanged while we set the combo
@@ -56,6 +71,11 @@ public partial class SettingsWindow : Window
         _autoClicker = autoClicker;
 
         InitializeComponent();
+
+        var version = AppVersionText();
+        TabsMain.Tag         = version;   // shown in the sidebar footer
+        TxtAboutVersion.Text = version;
+        StateChanged += (_, _) => UpdateMaxRestoreButton();
 
         // Windows 11: title bar matched to the system theme, rounded corners, Mica backdrop.
         DwmHelper.ApplySettingsWindow(this, ThemeManager.IsDarkMode);
@@ -170,7 +190,7 @@ public partial class SettingsWindow : Window
         LoadZoomIntoControls(_workingZoom);
         _loading = false;
 
-        _zoomDirty = false;
+        ZoomDirty = false;
         RefreshZoomCombo();
         BtnDeleteProfile.IsEnabled = _config.ZoomProfileNames.Count > 1;
         TxtZoomHkNote.Text = $"Saved with the zoom slot (open: “{name}” — use Save on the Zoom tab).";
@@ -226,7 +246,7 @@ public partial class SettingsWindow : Window
 
     private void MarkZoomDirty()
     {
-        if (!_loading) _zoomDirty = true;
+        if (!_loading) ZoomDirty = true;
     }
 
     private void RefreshZoomCombo()
@@ -265,7 +285,7 @@ public partial class SettingsWindow : Window
 
         _config.SaveZoomProfile(_openZoomName, _workingZoom, makeActive: true);
         ReloadServices();
-        _zoomDirty = false;
+        ZoomDirty = false;
         return true;
     }
 
@@ -330,7 +350,7 @@ public partial class SettingsWindow : Window
     /// <summary>If the open zoom slot has unsaved edits, asks to save/discard/cancel. False = abort.</summary>
     private bool EnsureZoomSavedOrDiscarded()
     {
-        if (!_zoomDirty) return true;
+        if (!ZoomDirty) return true;
 
         var choice = MessageBox.Show(this,
             $"Save changes to the zoom slot \"{_openZoomName}\" first?",
@@ -357,7 +377,7 @@ public partial class SettingsWindow : Window
         HkHoldHideCrosshair.BindingValue = _config.GetCrosshairHoldHideHotkeyCopy(name);
         _loading = false;
 
-        _xhDirty = false;
+        XhDirty = false;
         RefreshXhCombo();
         BtnDeleteXh.IsEnabled = _config.CrosshairProfileNames.Count > 1;
         TxtXhHkNote.Text = $"Saved with the crosshair slot (open: “{name}” — use Save on the Crosshair tab).";
@@ -391,7 +411,7 @@ public partial class SettingsWindow : Window
 
     private void MarkXhDirty()
     {
-        if (!_loading) _xhDirty = true;
+        if (!_loading) XhDirty = true;
     }
 
     private void RefreshXhCombo()
@@ -431,7 +451,7 @@ public partial class SettingsWindow : Window
         _config.SaveCrosshairProfile(_openXhName, _workingXh,
             HkCrosshair.BindingValue ?? new(), HkHoldHideCrosshair.BindingValue ?? new(), makeActive: true);
         ReloadServices();
-        _xhDirty = false;
+        XhDirty = false;
         return true;
     }
 
@@ -496,7 +516,7 @@ public partial class SettingsWindow : Window
 
     private bool EnsureXhSavedOrDiscarded()
     {
-        if (!_xhDirty) return true;
+        if (!XhDirty) return true;
 
         var choice = MessageBox.Show(this,
             $"Save changes to the crosshair slot \"{_openXhName}\" first?",
@@ -647,7 +667,7 @@ public partial class SettingsWindow : Window
         HkAcStartStop.BindingValue = _config.GetAutoClickerHotkeyCopy(name);
         _loading = false;
 
-        _acDirty = false;
+        AcDirty = false;
         RefreshAcCombo();
         BtnDeleteAc.IsEnabled = _config.AutoClickerProfileNames.Count > 1;
         TxtAcHkNote.Text = $"Saved with the auto-clicker slot (open: “{name}” — use Save on the Auto Clicker tab).";
@@ -711,7 +731,7 @@ public partial class SettingsWindow : Window
 
     private void MarkAcDirty()
     {
-        if (!_loading) _acDirty = true;
+        if (!_loading) AcDirty = true;
     }
 
     /// <summary>Shows only the stop-condition / fixed-position fields relevant to the current choices.</summary>
@@ -762,7 +782,7 @@ public partial class SettingsWindow : Window
 
         _config.SaveAutoClickerProfile(_openAcName, _workingAc, HkAcStartStop.BindingValue ?? new(), makeActive: true);
         ReloadServices();
-        _acDirty = false;
+        AcDirty = false;
         return true;
     }
 
@@ -826,7 +846,7 @@ public partial class SettingsWindow : Window
 
     private bool EnsureAcSavedOrDiscarded()
     {
-        if (!_acDirty) return true;
+        if (!AcDirty) return true;
 
         var choice = MessageBox.Show(this,
             $"Save changes to the auto-clicker slot \"{_openAcName}\" first?",
@@ -1052,9 +1072,45 @@ public partial class SettingsWindow : Window
         return false;
     }
 
-    // ── Footer ──────────────────────────────────────────────────────────────────
+    // ── Window chrome ───────────────────────────────────────────────────────────
+
+    private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void MaxRestore_Click(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    // Swap the maximize / restore glyph to match the window state.
+    private void UpdateMaxRestoreButton()
+    {
+        bool max = WindowState == WindowState.Maximized;
+        BtnMaxRestore.Content = max ? "" : "";
+        BtnMaxRestore.ToolTip = max ? "Restore" : "Maximize";
+        System.Windows.Automation.AutomationProperties.SetName(BtnMaxRestore, max ? "Restore" : "Maximize");
+    }
+
+    // Unsaved-changes pills on each slot card + dots beside the sidebar nav items.
+    private void UpdateDirtyIndicators()
+    {
+        // Sliders fire ValueChanged while InitializeComponent is still building the tree,
+        // so any of these may not exist yet.
+        if (PillZoomUnsaved is null || PillXhUnsaved is null || PillAcUnsaved is null ||
+            TabZoom is null || TabXh is null || TabAc is null)
+            return;
+        PillZoomUnsaved.Visibility = ZoomDirty ? Visibility.Visible : Visibility.Collapsed;
+        PillXhUnsaved.Visibility   = XhDirty   ? Visibility.Visible : Visibility.Collapsed;
+        PillAcUnsaved.Visibility   = AcDirty   ? Visibility.Visible : Visibility.Collapsed;
+        UiProps.SetIsDirty(TabZoom, ZoomDirty);
+        UiProps.SetIsDirty(TabXh,   XhDirty);
+        UiProps.SetIsDirty(TabAc,   AcDirty);
+    }
+
+    private static string AppVersionText()
+    {
+        var v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+        return v is null ? "Oversight" : $"Version {v.Major}.{v.Minor}.{v.Build}";
+    }
 
     // Re-paint the DWM title bar to match the new system theme while the window is open.
     private void OnThemeChanged()

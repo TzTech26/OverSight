@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
-  <assemblyIdentity version="2.0.0.0" name="Oversight"/>
+  <assemblyIdentity version="2.2.0.0" name="Oversight"/>
   <application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings>
       <!-- PerMonitorV2: GetCursorPos and Magnification API coordinates are always

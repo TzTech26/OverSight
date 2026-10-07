@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using Oversight.Services;
@@ -31,15 +32,15 @@ public partial class App : Application
         {
             MagnifierService.EmergencyReset();
             TryStopAutoClicker();          // never leave a runaway clicker going after a crash
-            System.Diagnostics.Debug.WriteLine($"[App] unhandled: {args.Exception}");
+            LogError(args.Exception);
             args.Handled = true;   // keep the tray app alive rather than bricking the screen
         };
-        AppDomain.CurrentDomain.UnhandledException += (_, _) => { MagnifierService.EmergencyReset(); TryStopAutoClicker(); };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) => { MagnifierService.EmergencyReset(); TryStopAutoClicker(); LogError(args.ExceptionObject); };
         AppDomain.CurrentDomain.ProcessExit        += (_, _) => { MagnifierService.EmergencyReset(); TryStopAutoClicker(); };
 
         // Single-instance guard via a named mutex. The name keeps the pre-rename "OverSight"
         // casing on purpose: mutex names are case-sensitive, and older installs use this one.
-        var mutex = new System.Threading.Mutex(true, "OverSight_SingleInstance", out bool isNew);
+        var mutex = new System.Threading.Mutex(true, "OverSight_SingleInstance" + AppProfile.Suffix, out bool isNew);
         if (!isNew)
         {
             MessageBox.Show("Oversight is already running.", "Oversight",
@@ -50,7 +51,7 @@ public partial class App : Application
         GC.KeepAlive(mutex);
 
         // Rebrand migration: carry the old ScreenZoom autostart entry over to Oversight.
-        StartupManager.MigrateLegacyEntry();
+        if (!AppProfile.IsIsolated) StartupManager.MigrateLegacyEntry();
 
         _config = new ConfigStore();
         _config.Load();
@@ -87,9 +88,18 @@ public partial class App : Application
         _hotkeys.ToggleAutoClickerRequested += () => _autoClicker?.ToggleRun();
         _hotkeys.HoldAutoClickerRequested   += vk => _autoClicker?.BeginHoldRun(vk);
 
+        _tray.Show();
+
+        // An isolated profile (OVERSIGHT_PROFILE, used for UI development) must not grab the
+        // global hotkeys or drive slot switching — a normal install may be running beside it.
+        if (AppProfile.IsIsolated)
+        {
+            _tray.OpenSettings();
+            return;
+        }
+
         _hotkeys.Start();
         _watcher.Start();
-        _tray.Show();
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -104,6 +114,23 @@ public partial class App : Application
         _magnifier?.Dispose();
         _config?.Save();
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Appends an unhandled exception to error.log in the config folder (trimmed to the last
+    /// ~256 KB) so problems swallowed by the keep-alive handler can still be diagnosed. Never throws.
+    /// </summary>
+    private static void LogError(object? error)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"[App] unhandled: {error}");
+            var path = Path.Combine(ConfigStore.ConfigDirectory, "error.log");
+            Directory.CreateDirectory(ConfigStore.ConfigDirectory);
+            if (File.Exists(path) && new FileInfo(path).Length > 256 * 1024) File.Delete(path);
+            File.AppendAllText(path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {error}{Environment.NewLine}{Environment.NewLine}");
+        }
+        catch { /* logging must never take the app down */ }
     }
 
     /// <summary>Best-effort stop of the auto-clicker from a crash / exit handler; never throws.</summary>

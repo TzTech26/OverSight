@@ -13,7 +13,10 @@ public static class StartupManager
         get
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: false);
-            return key?.GetValue(ValueName) is string v && v == ExePath;
+            // Paths are case-insensitive on Windows, and the installer may write this value
+            // with different casing (e.g. an older "OverSight" install folder).
+            return key?.GetValue(ValueName) is string v &&
+                   string.Equals(v, ExePath, StringComparison.OrdinalIgnoreCase);
         }
     }
 
