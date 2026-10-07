@@ -1,0 +1,54 @@
+<%- include('partials/head') %>
+<section class="section narrow">
+  <% if (justPurchased) { %><div class="alert alert-ok">Payment received — thank you! Your download is ready below.</div><% } %>
+  <h1>Download <%= settings.productName %></h1>
+  <p class="muted">You own a lifetime license. Pick a build and download — every future release shows up here automatically.</p>
+
+  <% if (!releases.length) { %>
+    <div class="alert alert-err">No builds are available right now. This usually means the NAS sync hasn't run yet — try again shortly.</div>
+  <% } else { %>
+    <div class="panel">
+      <label class="block">Version
+        <select id="versionSelect" class="select">
+          <% releases.forEach(function(r){ %>
+            <option value="<%= r.channel %>|<%= r.version %>"
+              data-file="<%= r.file %>" data-size="<%= r.sizeMB %>" data-sha="<%= r.sha256 || '' %>"
+              <%= (def && r.version === def.version && r.channel === def.channel) ? 'selected' : '' %>>
+              <%= r.label %><%= r.sizeMB ? ' · ' + r.sizeMB + ' MB' : '' %>
+            </option>
+          <% }); %>
+        </select>
+      </label>
+
+      <a id="downloadBtn" class="btn btn-primary btn-block" href="#">Download</a>
+
+      <div class="dl-meta">
+        <div><span class="muted">File:</span> <span id="dlFile"></span></div>
+        <div class="sha"><span class="muted">SHA-256:</span> <code id="dlSha"></code></div>
+      </div>
+      <p class="muted small">Betas labelled “Work in progress” are pre-release. First launch may show a one-time
+        Windows SmartScreen prompt → <b>More info → Run anyway</b>. Verify the file with the SHA-256 above if you like.</p>
+    </div>
+    <p class="muted small center">Builds last synced from source: <%= syncedAt ? new Date(syncedAt).toLocaleString() : 'pending' %></p>
+  <% } %>
+</section>
+
+<script>
+  (function () {
+    var sel = document.getElementById('versionSelect');
+    if (!sel) return;
+    var btn = document.getElementById('downloadBtn');
+    var fileEl = document.getElementById('dlFile');
+    var shaEl = document.getElementById('dlSha');
+    function update() {
+      var opt = sel.options[sel.selectedIndex];
+      var parts = opt.value.split('|'); // channel|version
+      btn.href = '/download/file?channel=' + encodeURIComponent(parts[0]) + '&version=' + encodeURIComponent(parts[1]);
+      fileEl.textContent = opt.getAttribute('data-file');
+      shaEl.textContent = opt.getAttribute('data-sha') || '—';
+    }
+    sel.addEventListener('change', update);
+    update();
+  })();
+</script>
+<%- include('partials/foot') %>

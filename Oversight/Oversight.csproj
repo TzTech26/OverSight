@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.22000.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Oversight</RootNamespace>
+    <AssemblyName>Oversight</AssemblyName>
+    <Product>Oversight</Product>
+    <AssemblyTitle>Oversight</AssemblyTitle>
+    <Version>2.0.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Build output to a local path (keeps bin/obj noise out of the source tree) -->
+    <BaseOutputPath>$(LOCALAPPDATA)\Oversight_build\bin\</BaseOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Embedded so the WPF window can load it via a pack URI for its title-bar/taskbar icon -->
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+</Project>

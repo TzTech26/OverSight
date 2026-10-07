@@ -1,0 +1,143 @@
+<%- include('partials/head') %>
+
+<section class="hero">
+  <div class="hero-copy">
+    <div class="eyebrow">Windows 11 · Built for gamers</div>
+    <h1><%= settings.productName %></h1>
+    <p class="lede"><%= settings.tagline %></p>
+    <p class="sub">Fullscreen live zoom around your cursor at ~60&nbsp;fps using the native
+      Windows Magnification API — no overlay, minimal CPU/GPU cost. Plus a per-game
+      auto-clicker, rebindable hotkeys, and a process whitelist so keys only fire in the
+      games you choose.</p>
+    <div class="hero-cta">
+      <% if (user && hasPaid) { %>
+        <a class="btn btn-primary" href="/download">Download <%= settings.productName %></a>
+      <% } else if (user) { %>
+        <form method="post" action="/buy"><button class="btn btn-primary" type="submit">Buy — <%= priceDisplay %></button></form>
+      <% } else { %>
+        <a class="btn btn-primary" href="/login?next=%2Fdownload">Get it — <%= priceDisplay %></a>
+      <% } %>
+      <a class="btn btn-ghost" href="#features">See what it does</a>
+    </div>
+    <div class="trust">One-time purchase · Lifetime updates · <% if (def) { %>Latest build v<%= def.version %><% } else { %>Instant download<% } %></div>
+  </div>
+  <div class="hero-art" aria-hidden="true">
+    <div class="screen">
+      <div class="screen-bar"><span></span><span></span><span></span></div>
+      <div class="zoom-ring"><div class="cross"></div></div>
+      <div class="tray">◎ zoom active</div>
+    </div>
+  </div>
+</section>
+
+<section id="features" class="section">
+  <h2>Everything, tuned for latency</h2>
+  <p class="section-sub">The tools you actually use mid-match — and nothing running in the hot path when you don't.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="card-ico">🔍</div><h3>Fullscreen live zoom</h3>
+      <p>The whole display magnifies around your cursor via <code>MagSetFullscreenTransform</code> — applied by the compositor, not your render path. Scroll-wheel adjusts zoom while active.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico">⌨️</div><h3>Rebindable hotkeys</h3>
+      <p>Every action is click-to-capture, modifier combos included. Toggle zoom, zoom in/out, crosshair, and the auto-clicker — all yours to map.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico">🎯</div><h3>Per-game auto-clicker</h3>
+      <p>Repeat any key or mouse button with adjustable interval + optional jitter, single/double click, fixed point, and stop conditions. Off by default; armed per game.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico">🛡️</div><h3>Process whitelist</h3>
+      <p>Hotkeys only fire when a whitelisted app is focused — everywhere else your keys pass through untouched. No surprises on the desktop.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico">➕</div><h3>Crosshair overlay</h3>
+      <p>A togglable centered crosshair, shown per app. Handy for games that hide theirs.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico">⚡</div><h3>Near-zero overhead</h3>
+      <p>The scroll hook is installed only while zoom is active. Runs from the system tray, optional start-on-boot, colour-changing tray icon.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section band">
+  <div class="showcase">
+    <div>
+      <h2>Made for borderless play</h2>
+      <p>Zoom works in borderless / windowed mode — the way most competitive players already run. Toggle it on with a single hotkey (default <kbd>F12</kbd>), scroll to dial in the magnification, toggle off. That's it.</p>
+      <ul class="checks">
+        <li>Default zoom toggle <kbd>F12</kbd>, zoom <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>Ctrl</kbd>+<kbd>−</kbd></li>
+        <li>Per-game profiles — different setup for CS2, Overwatch, Rocket League…</li>
+        <li>Auto-clicker stops the instant the game loses focus or the app quits</li>
+        <li>Settings saved as human-readable JSON you can back up</li>
+      </ul>
+    </div>
+    <div class="showcase-art" aria-hidden="true">
+      <div class="hotkey-demo">
+        <div class="row"><span>Toggle zoom</span><kbd>F12</kbd></div>
+        <div class="row"><span>Zoom in</span><kbd>Ctrl</kbd><kbd>=</kbd></div>
+        <div class="row"><span>Zoom out</span><kbd>Ctrl</kbd><kbd>−</kbd></div>
+        <div class="row"><span>Crosshair</span><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>X</kbd></div>
+        <div class="row"><span>Auto-clicker</span><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>C</kbd></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" class="section">
+  <h2>One price. Everything.</h2>
+  <p class="section-sub">Buy once, download every current and future build — verified releases and opt-in works-in-progress.</p>
+  <div class="pricing">
+    <div class="price-card">
+      <div class="price-tag"><%= priceDisplay %></div>
+      <div class="price-note">one-time · lifetime updates</div>
+      <ul class="checks">
+        <li>Fullscreen zoom + scroll-to-zoom</li>
+        <li>Per-game auto-clicker & profiles</li>
+        <li>Rebindable hotkeys + whitelist</li>
+        <li>All future updates included</li>
+        <li>Verified &amp; beta build access</li>
+      </ul>
+      <% if (user && hasPaid) { %>
+        <a class="btn btn-primary btn-block" href="/download">Go to your downloads</a>
+        <p class="muted center">You already own <%= settings.productName %>. Thank you!</p>
+      <% } else if (user) { %>
+        <form method="post" action="/buy"><button class="btn btn-primary btn-block" type="submit">Buy now — <%= priceDisplay %></button></form>
+        <p class="muted center">Secure checkout by Stripe.</p>
+      <% } else { %>
+        <a class="btn btn-primary btn-block" href="/login?next=%2Fdownload">Sign in to buy</a>
+        <p class="muted center">Google or email — takes a few seconds.</p>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<section id="faq" class="section band">
+  <h2>Good to know</h2>
+  <div class="faq">
+    <details><summary>What are the system requirements?</summary>
+      <p>Windows 11 (build 22000+), 64-bit. Windows 10 isn't supported. The installer bundles the .NET&nbsp;8 runtime, so there's nothing else to install.</p></details>
+    <details><summary>Is the download safe? I saw a SmartScreen warning.</summary>
+      <p>The installer isn't code-signed with a paid certificate yet, so Windows SmartScreen may show a one-time "Windows protected your PC" prompt. Click <b>More info → Run anyway</b>. Every build's SHA-256 is shown on your download page so you can verify the file.</p></details>
+    <details><summary>Will zoom work in my game?</summary>
+      <p>Use <b>borderless / windowed</b> mode. Exclusive-fullscreen (D3D) games bypass the desktop compositor, so the Magnification API can't transform them — borderless fixes it and most modern games support it natively.</p></details>
+    <details><summary>Do I get updates?</summary>
+      <p>Yes — it's a one-time purchase with lifetime updates. New verified builds appear on your download page automatically, and you can opt into works-in-progress (beta) builds too.</p></details>
+    <details><summary>How do I sign in?</summary>
+      <p>Google Sign-In or an emailed magic link — no password to remember. Your purchase is tied to your email.</p></details>
+  </div>
+</section>
+
+<section class="section cta-final">
+  <h2>Ready to see the whole field?</h2>
+  <% if (user && hasPaid) { %>
+    <a class="btn btn-primary" href="/download">Download <%= settings.productName %></a>
+  <% } else if (user) { %>
+    <form method="post" action="/buy"><button class="btn btn-primary" type="submit">Buy — <%= priceDisplay %></button></form>
+  <% } else { %>
+    <a class="btn btn-primary" href="/login?next=%2Fdownload">Get <%= settings.productName %> — <%= priceDisplay %></a>
+  <% } %>
+</section>
+
+<%- include('partials/foot') %>

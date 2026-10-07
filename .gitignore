@@ -1,0 +1,17 @@
+# Build output
+bin/
+obj/
+dist/
+*.user
+.vs/
+
+# Release binaries are built locally by installer/ scripts, not committed
+releases/*
+!releases/README.md
+
+# Website
+node_modules/
+.env
+website/data/
+*.log
+*.db

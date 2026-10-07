@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %></title>
+  <meta name="description" content="<%= settings.productName %> — <%= settings.tagline %>">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">◎</span> <%= settings.productName %>
+    </a>
+    <nav class="nav">
+      <a href="/#features">Features</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/#faq">FAQ</a>
+      <% if (user) { %>
+        <% if (hasPaid) { %><a href="/download" class="nav-cta">Download</a><% } %>
+        <a href="/account">Account</a>
+        <% if (isAdmin) { %><a href="/admin">Admin</a><% } %>
+        <a href="/logout" class="muted">Sign out</a>
+      <% } else { %>
+        <a href="/login">Sign in</a>
+        <a href="/#pricing" class="nav-cta">Get it</a>
+      <% } %>
+    </nav>
+  </header>
+  <main class="site-main">

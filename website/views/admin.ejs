@@ -1,0 +1,127 @@
+<%- include('partials/head') %>
+<section class="section admin">
+  <h1>Admin console</h1>
+  <% if (flash) { %><div class="alert alert-ok"><%= flash %></div><% } %>
+  <% if (saved) { %><div class="alert alert-ok">Saved <%= saved %> settings.</div><% } %>
+
+  <!-- Status overview -->
+  <div class="admin-grid">
+    <div class="stat"><div class="stat-n"><%= users.length %></div><div class="stat-l">Users</div></div>
+    <div class="stat"><div class="stat-n"><%= purchases.filter(p => p.status==='paid').length %></div><div class="stat-l">Paid</div></div>
+    <div class="stat"><div class="stat-n"><%= releases.length %></div><div class="stat-l">Downloadable builds</div></div>
+    <div class="stat"><div class="stat-n"><%= stripe.secretKey ? '✅' : '⚠️' %></div><div class="stat-l">Stripe <%= stripe.secretKey ? 'live' : 'not set' %></div></div>
+  </div>
+
+  <!-- NAS sync -->
+  <div class="panel">
+    <h2>NAS release sync</h2>
+    <div class="kv"><span class="muted">Source folder</span><span><code><%= nasReleasesDir || '(NAS_RELEASES_DIR not set)' %></code></span></div>
+    <div class="kv"><span class="muted">Last sync</span><span><%= syncStatus.lastRunUtc ? new Date(syncStatus.lastRunUtc).toLocaleString() : 'never' %></span></div>
+    <div class="kv"><span class="muted">Result</span><span class="<%= syncStatus.ok ? 'ok' : 'err' %>"><%= syncStatus.message %></span></div>
+    <% if (manifest) { %>
+      <div class="kv"><span class="muted">Manifest latest</span><span>verified <b><%= manifest.latest && manifest.latest.verified %></b> · beta <b><%= manifest.latest && manifest.latest.beta %></b></span></div>
+    <% } %>
+    <form method="post" action="/admin/sync"><button class="btn btn-primary" type="submit">Pull latest from NAS now</button></form>
+    <p class="muted small">Runs automatically on boot and every <%= syncIntervalHours || 24 %>h. Only manifest.json + installer files are mirrored to <code>data/releases/</code>.</p>
+  </div>
+
+  <!-- Product & pricing -->
+  <div class="panel" id="settings">
+    <h2>Product &amp; pricing</h2>
+    <form method="post" action="/admin/settings" class="stack">
+      <label>Product name <input name="productName" value="<%= settings.productName %>"></label>
+      <label>Tagline <input name="tagline" value="<%= settings.tagline %>"></label>
+      <div class="two">
+        <label>Price (<%= settings.currency.toUpperCase() %>) <input name="priceDollars" type="number" step="0.01" min="0" value="<%= (settings.priceCents/100).toFixed(2) %>"></label>
+        <label>Currency <input name="currency" value="<%= settings.currency %>" maxlength="3"></label>
+      </div>
+      <label>Domain (display only) <input name="domain" value="<%= settings.domain %>" placeholder="oversightapp.com"></label>
+      <fieldset class="fieldset">
+        <legend>Downloadable channels</legend>
+        <label class="chk"><input type="checkbox" name="channelVerified" <%= settings.channels.verified ? 'checked' : '' %>> Verified (tested public builds)</label>
+        <label class="chk"><input type="checkbox" name="channelBeta" <%= settings.channels.beta ? 'checked' : '' %>> Beta — “Work in progress”</label>
+        <label>Default selected channel
+          <select name="defaultChannel">
+            <option value="verified" <%= settings.defaultChannel==='verified'?'selected':'' %>>Verified</option>
+            <option value="beta" <%= settings.defaultChannel==='beta'?'selected':'' %>>Beta</option>
+          </select>
+        </label>
+      </fieldset>
+      <button class="btn btn-primary" type="submit">Save product settings</button>
+    </form>
+  </div>
+
+  <!-- Stripe -->
+  <div class="panel" id="stripe">
+    <h2>Stripe keys</h2>
+    <% if (stripeFromEnv) { %>
+      <div class="alert alert-ok">Stripe keys are set from <code>.env</code> and take precedence over anything entered here.</div>
+    <% } %>
+    <form method="post" action="/admin/stripe" class="stack">
+      <label>Secret key <input name="stripeSecretKey" value="<%= stripe.secretKey ? '••••••••' + stripe.secretKey.slice(-4) : '' %>" placeholder="sk_live_…"></label>
+      <label>Publishable key <input name="stripePublishableKey" value="<%= stripe.publishableKey %>" placeholder="pk_live_…"></label>
+      <label>Webhook signing secret <input name="stripeWebhookSecret" value="<%= stripe.webhookSecret ? '••••••••' : '' %>" placeholder="whsec_…"></label>
+      <button class="btn btn-primary" type="submit">Save Stripe keys</button>
+    </form>
+    <p class="muted small">Webhook endpoint to add in Stripe: <code><%= publicUrl %>/stripe/webhook</code> — event <code>checkout.session.completed</code>.
+      Leaving the masked fields as dots keeps the stored value; type a new key to replace it.</p>
+  </div>
+
+  <!-- Integrations status -->
+  <div class="panel">
+    <h2>Integrations</h2>
+    <div class="kv"><span class="muted">Google Sign-In</span><span class="<%= googleConfigured?'ok':'err' %>"><%= googleConfigured ? 'configured' : 'not configured (set GOOGLE_CLIENT_ID/SECRET in .env)' %></span></div>
+    <div class="kv"><span class="muted">Email (SMTP)</span><span class="<%= smtpConfigured?'ok':'err' %>"><%= smtpConfigured ? 'configured' : 'not configured — magic links printed to server log' %></span></div>
+    <div class="kv"><span class="muted">Public URL</span><span><code><%= publicUrl %></code></span></div>
+  </div>
+
+  <!-- Users -->
+  <div class="panel" id="users">
+    <h2>Users &amp; licenses</h2>
+    <form method="post" action="/admin/comp" class="inline-form">
+      <input name="email" type="email" placeholder="grant a free license to email…" required>
+      <button class="btn btn-ghost" type="submit">Comp license</button>
+    </form>
+    <table class="table">
+      <thead><tr><th>Email</th><th>Joined</th><th>Admin</th></tr></thead>
+      <tbody>
+        <% users.forEach(function(u){ %>
+          <tr>
+            <td><%= u.email %></td>
+            <td><%= new Date(u.created_at + 'Z').toLocaleDateString() %></td>
+            <td>
+              <form method="post" action="/admin/set-admin" class="inline-form">
+                <input type="hidden" name="email" value="<%= u.email %>">
+                <input type="hidden" name="on" value="<%= u.is_admin ? '0' : '1' %>">
+                <button class="linkbtn" type="submit"><%= u.is_admin ? '✅ admin (revoke)' : 'make admin' %></button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Recent purchases -->
+  <div class="panel">
+    <h2>Recent purchases</h2>
+    <% if (!purchases.length) { %><p class="muted">None yet.</p><% } else { %>
+    <table class="table">
+      <thead><tr><th>Date</th><th>Email</th><th>Amount</th><th>Status</th><th>Source</th></tr></thead>
+      <tbody>
+        <% purchases.forEach(function(p){ %>
+          <tr>
+            <td><%= new Date(p.created_at + 'Z').toLocaleString() %></td>
+            <td><%= p.email %></td>
+            <td><%= p.amount_cents ? '$'+(p.amount_cents/100).toFixed(2) : '—' %></td>
+            <td><span class="pill pill-<%= p.status %>"><%= p.status %></span></td>
+            <td><%= p.source %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/foot') %>
