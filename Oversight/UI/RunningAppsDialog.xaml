@@ -15,7 +15,7 @@
             <TextBlock Text="Pick a game" FontFamily="{StaticResource DisplayFont}" FontWeight="SemiBold"
                        FontSize="20" Foreground="{DynamicResource TitleTextBrush}"/>
             <TextBlock Style="{StaticResource RowDesc}"
-                       Text="These apps have a window open right now. Hold Ctrl or Shift to select several."/>
+                       Text="Hold Ctrl or Shift to select several."/>
         </StackPanel>
 
         <DockPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">

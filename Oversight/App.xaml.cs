@@ -50,10 +50,20 @@ public partial class App : Application
             try
             {
                 using var old = System.Diagnostics.Process.GetProcessById(pid);
+                Updater.Log($"{Updater.CurrentVersion}: waiting for {old.ProcessName} ({pid}) to exit.");
                 // An old copy that didn't quit would hold the hotkeys and the tray, so close it.
-                if (old.ProcessName == "Oversight" && !old.WaitForExit(15000)) { old.Kill(); old.WaitForExit(5000); }
+                if (old.ProcessName == "Oversight" && !old.WaitForExit(15000))   // name check guards against a reused pid
+                {
+                    Updater.Log($"{Updater.CurrentVersion}: old copy still running after 15 s, closing it.");
+                    old.Kill();
+                    old.WaitForExit(5000);
+                }
             }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception) { }   // already gone
+            catch (ArgumentException) { }   // already gone
+            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+            {
+                Updater.Log($"{Updater.CurrentVersion}: couldn't close the old copy: {ex.Message}");
+            }
         }
         if (Updater.CanSelfUpdate) Updater.CleanUpAfterUpdate();
 

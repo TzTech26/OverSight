@@ -200,7 +200,7 @@ public partial class SettingsWindow : Window
         ZoomDirty = false;
         RefreshZoomCombo();
         BtnDeleteProfile.IsEnabled = _config.ZoomProfileNames.Count > 1;
-        TxtZoomHkNote.Text = $"Saved with the zoom slot (open: “{name}” — use Save on the Zoom tab).";
+        TxtZoomHkNote.Text = $"Saved with “{name}”.";
     }
 
     private void LoadZoomIntoControls(ZoomSettings s)
@@ -336,7 +336,7 @@ public partial class SettingsWindow : Window
         _openZoomName = name;
         RefreshZoomCombo();
         RebuildGameProfilesTab();
-        TxtZoomHkNote.Text = $"Saved with the zoom slot (open: “{name}” — use Save on the Zoom tab).";
+        TxtZoomHkNote.Text = $"Saved with “{name}”.";
     }
 
     private void DeleteProfile_Click(object sender, RoutedEventArgs e)
@@ -387,7 +387,7 @@ public partial class SettingsWindow : Window
         XhDirty = false;
         RefreshXhCombo();
         BtnDeleteXh.IsEnabled = _config.CrosshairProfileNames.Count > 1;
-        TxtXhHkNote.Text = $"Saved with the crosshair slot (open: “{name}” — use Save on the Crosshair tab).";
+        TxtXhHkNote.Text = $"Saved with “{name}”.";
         UpdateCrosshairPreview();
     }
 
@@ -503,7 +503,7 @@ public partial class SettingsWindow : Window
         _openXhName = name;
         RefreshXhCombo();
         RebuildGameProfilesTab();
-        TxtXhHkNote.Text = $"Saved with the crosshair slot (open: “{name}” — use Save on the Crosshair tab).";
+        TxtXhHkNote.Text = $"Saved with “{name}”.";
     }
 
     private void DeleteXh_Click(object sender, RoutedEventArgs e)
@@ -677,7 +677,7 @@ public partial class SettingsWindow : Window
         AcDirty = false;
         RefreshAcCombo();
         BtnDeleteAc.IsEnabled = _config.AutoClickerProfileNames.Count > 1;
-        TxtAcHkNote.Text = $"Saved with the auto-clicker slot (open: “{name}” — use Save on the Auto Clicker tab).";
+        TxtAcHkNote.Text = $"Saved with “{name}”.";
     }
 
     private void LoadAcIntoControls(AutoClickerSettings s)
@@ -833,7 +833,7 @@ public partial class SettingsWindow : Window
         _openAcName = name;
         RefreshAcCombo();
         RebuildGameProfilesTab();
-        TxtAcHkNote.Text = $"Saved with the auto-clicker slot (open: “{name}” — use Save on the Auto Clicker tab).";
+        TxtAcHkNote.Text = $"Saved with “{name}”.";
     }
 
     private void DeleteAc_Click(object sender, RoutedEventArgs e)

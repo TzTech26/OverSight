@@ -129,9 +129,6 @@
                                                 <TextBlock Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
                                                            FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextLabelBrush}"/>
-                                                <TextBlock Text="A dot beside a page means it has unsaved changes."
-                                                           FontSize="11.5" Margin="0,3,0,0" TextWrapping="Wrap"
-                                                           Foreground="{DynamicResource TextMutedBrush}"/>
                                             </StackPanel>
                                         </Border>
 
@@ -316,7 +313,7 @@
 
                             <TextBlock Text="Zoom" Style="{StaticResource PageTitle}"/>
                             <TextBlock Style="{StaticResource PageSubtitle}"
-                                       Text="Magnify the screen around your cursor. Everything on this page is stored in a zoom save slot — assign slots to games in Game Profiles, or switch them from the tray icon."/>
+                                       Text="Saved per slot. Assign slots to games in Game Profiles."/>
 
                             <!-- Save slot -->
                             <Border Style="{StaticResource SlotCard}">
@@ -359,7 +356,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Default zoom level" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="How far the screen magnifies when zoom turns on. 2.0× makes everything twice as big."/>
+                                                       Text="Magnification when zoom turns on."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Slider x:Name="SliderZoom" Style="{StaticResource SliderBox}"
@@ -379,7 +376,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Zoom step" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="How much each Zoom in / Zoom out press or mouse-wheel notch changes the magnification."/>
+                                                       Text="Change per zoom key press or wheel notch."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Slider x:Name="SliderStep" Style="{StaticResource SliderBox}"
@@ -405,7 +402,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Zoom-in animation" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Ramp smoothly up to your zoom level instead of snapping. The slider sets how long it takes."/>
+                                                       Text="Ramp up instead of snapping."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Slider x:Name="SliderAnim" Style="{StaticResource SliderBox}"
@@ -429,7 +426,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Zoom-out animation" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Ramp smoothly back to normal size when zoom turns off."/>
+                                                       Text="Ramp back instead of snapping."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Slider x:Name="SliderAnimOut" Style="{StaticResource SliderBox}"
@@ -453,7 +450,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Smooth panning" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="The view glides toward the cursor instead of tracking it exactly, softening fast moves and monitor hand-offs. Lower is snappier, higher is floatier."/>
+                                                       Text="Softens fast cursor moves. Lower is snappier."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Slider x:Name="SliderPan" Style="{StaticResource SliderBox}"
@@ -484,7 +481,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Zoom activation" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Toggle: press once to turn zoom on and again to turn it off. Hold: zoom stays on only while the key is held."/>
+                                                       Text="Toggle: press on, press off. Hold: on while held."/>
                                         </StackPanel>
                                         <ComboBox x:Name="CbActivation" Grid.Column="1" Width="200" VerticalAlignment="Center"
                                                   DisplayMemberPath="Display" SelectionChanged="CbActivation_Changed"
@@ -508,7 +505,6 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Zoom in" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}" Text="The mouse wheel also zooms while zoom is on."/>
                                         </StackPanel>
                                         <local:HotkeyCaptureBox x:Name="HkZoomIn" Grid.Column="1"
                                                                 AutomationProperties.Name="Zoom in keybind"/>
@@ -537,7 +533,7 @@
 
                             <TextBlock Text="Crosshair" Style="{StaticResource PageTitle}"/>
                             <TextBlock Style="{StaticResource PageSubtitle}"
-                                       Text="Draw a custom crosshair over games running in Borderless or Windowed mode. Whether it appears is decided per game in Game Profiles."/>
+                                       Text="Works in Borderless or Windowed games. Set where it shows in Game Profiles."/>
 
                             <!-- Save slot -->
                             <Border Style="{StaticResource SlotCard}">
@@ -647,7 +643,7 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Thickness" Style="{StaticResource CompactLabel}"
-                                                       ToolTip="Line width of the crosshair. Also scales the centre dot of the dot shapes."/>
+                                                       ToolTip="Line width. Also scales the centre dot."/>
                                             <Slider x:Name="SliderXhThickness" Grid.Column="1" VerticalAlignment="Center"
                                                     Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True"
                                                     ValueChanged="SliderXhThickness_Changed" AutomationProperties.Name="Crosshair thickness"/>
@@ -664,7 +660,7 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Gap" Style="{StaticResource CompactLabel}"
-                                                       ToolTip="Empty space in the middle of the cross shapes so the exact aim point stays clear. Ignored by the dot and circle shapes."/>
+                                                       ToolTip="Clear space at the centre of cross shapes."/>
                                             <Slider x:Name="SliderXhGap" Grid.Column="1" VerticalAlignment="Center"
                                                     Minimum="0" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True"
                                                     ValueChanged="SliderXhGap_Changed" AutomationProperties.Name="Crosshair gap"/>
@@ -699,7 +695,7 @@
                                             </Grid.ColumnDefinitions>
                                             <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
                                                 <TextBlock Text="Centre dot" Style="{StaticResource RowTitle}"/>
-                                                <TextBlock Style="{StaticResource RowDesc}" Text="A small dot at the exact aim point of cross and circle shapes."/>
+                                                <TextBlock Style="{StaticResource RowDesc}" Text="Dot at the aim point."/>
                                             </StackPanel>
                                             <CheckBox x:Name="ChkXhCenterDot" Grid.Column="1" VerticalAlignment="Center"
                                                       AutomationProperties.Name="Centre dot"
@@ -738,7 +734,7 @@
                                             </Grid>
                                         </Border>
                                         <TextBlock Style="{StaticResource RowDesc}" Margin="2,12,0,0"
-                                                   Text="While this page is open your edits also show live at the centre of the screen."/>
+                                                   Text="Edits also show live at the centre of the screen while this page is open."/>
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -755,7 +751,6 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Show / hide crosshair" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}" Text="Toggles the overlay in the game you're playing."/>
                                         </StackPanel>
                                         <local:HotkeyCaptureBox x:Name="HkCrosshair" Grid.Column="1"
                                                                 AutomationProperties.Name="Show or hide crosshair keybind"/>
@@ -769,7 +764,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Hide while held (ADS)" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Hides the crosshair only while this key or mouse button is held — bind your aim-down-sights button so the game's own scope takes over. Unbound by default."/>
+                                                       Text="Hidden while held. Bind your aim-down-sights button."/>
                                         </StackPanel>
                                         <local:HotkeyCaptureBox x:Name="HkHoldHideCrosshair" Grid.Column="1"
                                                                 AllowMouseButtons="True"
@@ -789,7 +784,7 @@
 
                             <TextBlock Text="Auto Clicker" Style="{StaticResource PageTitle}"/>
                             <TextBlock Style="{StaticResource PageSubtitle}"
-                                       Text="Repeat a key or mouse button on demand. It never runs on its own — assign a slot to a game in Game Profiles, then press the start/stop key while that game is focused."/>
+                                       Text="Never runs on its own: assign a slot to a game in Game Profiles, then press its start/stop key."/>
 
                             <!-- Save slot -->
                             <Border Style="{StaticResource SlotCard}">
@@ -832,13 +827,13 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Key or button to repeat" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Click the box and press a key or mouse button. Left mouse can't be captured in the box — use Left click instead. Modifiers are ignored."/>
+                                                       Text="Left mouse can't be captured here; use Left click."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <local:HotkeyCaptureBox x:Name="HkAcAction" AllowMouseButtons="True"
                                                                     AutomationProperties.Name="Key or button to repeat"/>
                                             <Button Content="Left click" Click="AcSetLeftClick_Click" Margin="8,0,0,0"
-                                                    ToolTip="Set the repeated action to the left mouse button (which can't be captured in the box)."/>
+                                                    ToolTip="Use the left mouse button."/>
                                         </StackPanel>
                                     </Grid>
                                     <Border Style="{StaticResource RowDivider}"/>
@@ -849,7 +844,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Mouse click type" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}" Text="Single or double click per repeat. Only applies to mouse buttons."/>
+                                            <TextBlock Style="{StaticResource RowDesc}" Text="Mouse buttons only."/>
                                         </StackPanel>
                                         <ComboBox x:Name="CbAcClickType" Grid.Column="1" Width="200" VerticalAlignment="Center"
                                                   DisplayMemberPath="Display" SelectionChanged="CbAcClickType_Changed"
@@ -870,7 +865,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Interval" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Delay between clicks. Lower is faster — the minimum is 10 ms (100 clicks per second)."/>
+                                                       Text="Minimum 10 ms (100 clicks per second)."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Slider x:Name="SliderAcInterval" Style="{StaticResource SliderBox}"
@@ -890,7 +885,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Random jitter" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Vary each interval by up to this many milliseconds so the timing isn't perfectly even."/>
+                                                       Text="Randomizes each interval by up to this much."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Slider x:Name="SliderAcJitter" Style="{StaticResource SliderBox}"
@@ -914,7 +909,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Adaptive speed limit" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Recommended. Slows down automatically when the target app can't keep up, so very fast rates don't flood and freeze it."/>
+                                                       Text="Recommended. Slows down when the app can't keep up."/>
                                         </StackPanel>
                                         <CheckBox x:Name="ChkAcAdaptive" Grid.Column="1" VerticalAlignment="Center"
                                                   AutomationProperties.Name="Adaptive speed limit"
@@ -934,8 +929,6 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Stop after" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Run until you stop it, for a set time, or for a number of clicks."/>
                                         </StackPanel>
                                         <ComboBox x:Name="CbAcRepeat" Grid.Column="1" Width="200" VerticalAlignment="Center"
                                                   DisplayMemberPath="Display" SelectionChanged="CbAcRepeat_Changed"
@@ -982,7 +975,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Click at a fixed screen point" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Clicks land at the X, Y position below instead of wherever the cursor is. Mouse buttons only."/>
+                                                       Text="Clicks at the X, Y below instead of the cursor. Mouse buttons only."/>
                                         </StackPanel>
                                         <CheckBox x:Name="ChkAcFixedPos" Grid.Column="1" VerticalAlignment="Center"
                                                   AutomationProperties.Name="Click at a fixed screen point"
@@ -1007,7 +1000,7 @@
                                             <Button x:Name="BtnAcCapturePos" Grid.Column="4" Content="Pick point on screen…"
                                                     Click="AcCapturePos_Click" ui:UiProps.Glyph="&#xE81D;"
                                                     HorizontalAlignment="Right" VerticalAlignment="Center" Margin="16,0,0,0"
-                                                    ToolTip="Click this, then click the spot on screen you want — right-click to cancel."/>
+                                                    ToolTip="Click, then click the spot. Right-click cancels."/>
                                         </Grid>
                                     </StackPanel>
                                 </StackPanel>
@@ -1036,7 +1029,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Start / stop activation" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Toggle: press once to start and again to stop. Hold: clicks only while the key is held down."/>
+                                                       Text="Toggle: press to start and stop. Hold: clicks while held."/>
                                         </StackPanel>
                                         <ComboBox x:Name="CbAcActivation" Grid.Column="1" Width="200" VerticalAlignment="Center"
                                                   DisplayMemberPath="Display" SelectionChanged="CbAcActivation_Changed"
@@ -1051,7 +1044,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Safety countdown" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Wait this many seconds (with a tray notice) after you press start, so a runaway clicker is easy to catch."/>
+                                                       Text="Delay after start, so a runaway clicker is easy to catch."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBox x:Name="TxtAcSafetySeconds" Width="64" MaxLength="3"
@@ -1072,7 +1065,7 @@
                                 <DockPanel>
                                     <TextBlock Style="{StaticResource CalloutGlyph}"/>
                                     <TextBlock TextWrapping="Wrap" FontSize="12.5" LineHeight="18" Foreground="{DynamicResource TextLabelBrush}"
-                                               Text="A run stops when you press the key again, when the game loses focus, and when Oversight quits. Injected input may not register in exclusive-fullscreen games — use Borderless or Windowed mode."/>
+                                               Text="Stops when you press the key again, the game loses focus, or Oversight quits. May not work in exclusive fullscreen."/>
                                 </DockPanel>
                             </Border>
 
@@ -1094,14 +1087,14 @@
 
                         <TextBlock Grid.Row="0" Text="Game Profiles" Style="{StaticResource PageTitle}"/>
                         <TextBlock Grid.Row="1" Style="{StaticResource PageSubtitle}"
-                                   Text="Choose which zoom, crosshair and auto-clicker slots load automatically while each game is in focus. Changes here apply right away."/>
+                                   Text="Slots load automatically while each game is focused."/>
 
                         <!-- Everywhere else -->
                         <TextBlock Grid.Row="2" Text="Everywhere else" Style="{StaticResource SectionHeader}"/>
                         <Border Grid.Row="3" Style="{StaticResource Card}" Padding="20,16,20,18">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource RowDesc}" Margin="0,0,0,12"
-                                           Text="Used on the desktop and in any app that isn't listed below. Pick (off) to disable a feature outside your games."/>
+                                           Text="Used outside your listed games."/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -1173,7 +1166,7 @@
                                 <ListBox x:Name="LbRules" SelectionMode="Single" MinHeight="170"
                                          BorderThickness="0" Padding="0"
                                          HorizontalContentAlignment="Stretch"
-                                         ui:UiProps.EmptyText="No games yet. Start a game, then click “Add running app…” to give it its own zoom, crosshair and auto-clicker slots.">
+                                         ui:UiProps.EmptyText="No games yet. Start one, then click “Add running app…”.">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="0,1">
@@ -1227,8 +1220,6 @@
                         <StackPanel Style="{StaticResource PageBody}">
 
                             <TextBlock Text="General" Style="{StaticResource PageTitle}"/>
-                            <TextBlock Style="{StaticResource PageSubtitle}"
-                                       Text="App-wide settings. These are always active and apply immediately — they aren't part of any save slot."/>
 
                             <TextBlock Text="App" Style="{StaticResource SectionHeader}" Margin="2,24,0,10"/>
                             <Border Style="{StaticResource Card}">
@@ -1241,7 +1232,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Open Oversight settings" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Global hotkey that shows or hides this window from anywhere."/>
+                                                       Text="Shows or hides this window from anywhere."/>
                                         </StackPanel>
                                         <local:HotkeyCaptureBox x:Name="HkOpenSettings" Grid.Column="1"
                                                                 AutomationProperties.Name="Open settings keybind"/>
@@ -1254,8 +1245,6 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Run Oversight when Windows starts" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Starts quietly in the system tray when you sign in."/>
                                         </StackPanel>
                                         <CheckBox x:Name="ChkStartup" Grid.Column="1" VerticalAlignment="Center"
                                                   AutomationProperties.Name="Run Oversight when Windows starts"
@@ -1270,7 +1259,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Warn about hotkey conflicts" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Notifies you when another app already uses one of your keys. At most once every 30 minutes."/>
+                                                       Text="At most once every 30 minutes."/>
                                         </StackPanel>
                                         <CheckBox x:Name="ChkHotkeyWarnings" Grid.Column="1" VerticalAlignment="Center"
                                                   AutomationProperties.Name="Warn about hotkey conflicts"
@@ -1283,7 +1272,7 @@
                                 <DockPanel>
                                     <TextBlock Style="{StaticResource CalloutGlyph}" Text="&#xE765;"/>
                                     <TextBlock TextWrapping="Wrap" FontSize="12.5" LineHeight="18" Foreground="{DynamicResource TextLabelBrush}"
-                                               Text="Each feature's own keybinds live on its page (Zoom, Crosshair, Auto Clicker) and are saved with that slot. Click a key box and press your combination; press Escape to clear it."/>
+                                               Text="Each feature's keybinds are on its own page. Escape clears a key box."/>
                                 </DockPanel>
                             </Border>
 
@@ -1313,7 +1302,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Check for updates automatically" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}" Text="Looks at the project&apos;s GitHub releases about once a day. Nothing else is sent."/>
+                                            <TextBlock Style="{StaticResource RowDesc}" Text="Once a day, from GitHub releases."/>
                                         </StackPanel>
                                         <CheckBox x:Name="ChkCheckUpdates" Grid.Column="1" VerticalAlignment="Center"
                                                   AutomationProperties.Name="Check for updates automatically"
@@ -1327,7 +1316,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Install updates automatically" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}" Text="Downloads the new version, checks its published checksum and restarts Oversight in the tray."/>
+                                            <TextBlock Style="{StaticResource RowDesc}" Text="Verifies the download and restarts in the tray."/>
                                         </StackPanel>
                                         <CheckBox x:Name="ChkAutoInstall" Grid.Column="1" VerticalAlignment="Center"
                                                   AutomationProperties.Name="Install updates automatically"
@@ -1352,7 +1341,7 @@
                                         <TextBlock x:Name="TxtAboutVersion" FontSize="12.5" Margin="0,2,0,0"
                                                    Foreground="{DynamicResource AccentTextBrush}"/>
                                         <TextBlock Style="{StaticResource RowDesc}" Margin="0,6,0,0"
-                                                   Text="Screen zoom, crosshair overlay and auto clicker for Windows 11. Overlays and zoom work best with games in Borderless or Windowed mode — exclusive fullscreen bypasses the desktop compositor."/>
+                                                   Text="Screen zoom, crosshair overlay and auto clicker. Use Borderless or Windowed mode in games."/>
                                     </StackPanel>
                                 </Grid>
                             </Border>

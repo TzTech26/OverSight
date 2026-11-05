@@ -37,6 +37,19 @@ public sealed class Updater
     public static bool CanSelfUpdate => Environment.ProcessPath is string exe && !AppProfile.IsIsolated
         && !File.Exists(Path.Combine(Path.GetDirectoryName(exe)!, "Oversight.dll"));
 
+    /// <summary>Appends a line to update.log in the config folder (kept small). Never throws.</summary>
+    public static void Log(string line)
+    {
+        try
+        {
+            string path = Path.Combine(ConfigStore.ConfigDirectory, "update.log");
+            Directory.CreateDirectory(ConfigStore.ConfigDirectory);
+            if (File.Exists(path) && new FileInfo(path).Length > 64 * 1024) File.Delete(path);
+            File.AppendAllText(path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {line}{Environment.NewLine}");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+    }
+
     /// <summary>Removes the previous copy left behind by an update.</summary>
     public static void CleanUpAfterUpdate()
     {
@@ -137,7 +150,14 @@ public sealed class Updater
                 File.Move(target + ".old", target);
                 return $"Windows blocked the new version from starting, so Oversight kept {CurrentVersion}.";
             }
+            Log($"{CurrentVersion}: started {update.Version}, quitting.");
             QuitRequested?.Invoke();
+            // Fallback if the normal shutdown stalls: two copies would fight over the hotkeys.
+            _ = Task.Delay(TimeSpan.FromSeconds(10)).ContinueWith(_ =>
+            {
+                Log($"{CurrentVersion}: still running 10 s after the hand-off, forcing exit.");
+                Environment.Exit(0);
+            });
             return null;
         }
         catch (UnauthorizedAccessException)
