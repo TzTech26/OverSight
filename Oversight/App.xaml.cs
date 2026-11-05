@@ -19,6 +19,7 @@ public partial class App : Application
     private TrayManager?        _tray;
     private Updater?            _updater;
     private DispatcherTimer?    _updateTimer;
+    private static System.Threading.Mutex? _instanceLock;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -43,14 +44,20 @@ public partial class App : Application
         // After an update the new copy waits for the old one to exit, then removes the old exe.
         if (e.Args.SkipWhile(a => a != "--wait").Skip(1).FirstOrDefault() is string pidText && int.TryParse(pidText, out int pid))
         {
-            try { using var old = System.Diagnostics.Process.GetProcessById(pid); old.WaitForExit(15000); }
-            catch (ArgumentException) { }   // already gone
+            try
+            {
+                using var old = System.Diagnostics.Process.GetProcessById(pid);
+                // An old copy that didn't quit would hold the hotkeys and the tray, so close it.
+                if (old.ProcessName == "Oversight" && !old.WaitForExit(15000)) { old.Kill(); old.WaitForExit(5000); }
+            }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception) { }   // already gone
         }
         if (Updater.CanSelfUpdate) Updater.CleanUpAfterUpdate();
 
         // Single-instance guard via a named mutex. The name keeps the pre-rename "OverSight"
         // casing on purpose: mutex names are case-sensitive, and older installs use this one.
-        var mutex = new System.Threading.Mutex(true, "OverSight_SingleInstance" + AppProfile.Suffix, out bool isNew);
+        // Held in a field for the app's lifetime: a local gets garbage-collected, which releases the lock.
+        _instanceLock = new System.Threading.Mutex(true, "OverSight_SingleInstance" + AppProfile.Suffix, out bool isNew);
         if (!isNew)
         {
             MessageBox.Show("Oversight is already running.", "Oversight",
@@ -58,7 +65,6 @@ public partial class App : Application
             Shutdown();
             return;
         }
-        GC.KeepAlive(mutex);
 
         // Rebrand migration: carry the old ScreenZoom autostart entry over to Oversight.
         if (!AppProfile.IsIsolated) StartupManager.MigrateLegacyEntry();

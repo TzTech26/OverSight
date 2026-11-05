@@ -58,6 +58,7 @@ public sealed class HotkeyManager : IDisposable
     private bool                      _disposed;
 
     public event Action<string>? HotkeyConflict;
+    private readonly HashSet<string> _reportedConflicts = [];
     public event Action?         OpenSettingsRequested;
     public event Action?         ToggleCrosshairRequested;
 
@@ -202,12 +203,13 @@ public sealed class HotkeyManager : IDisposable
             if (name is "ToggleZoom" or "OpenSettings" or "ToggleCrosshair" or "HoldHideCrosshair" or "AutoClickerStartStop")
                 mods |= NativeMethods.MOD_NOREPEAT;
 
-            if (!NativeMethods.RegisterHotKey(hwnd, id, mods, b.VirtualKey))
-            {
-                int err = System.Runtime.InteropServices.Marshal.GetLastWin32Error();
-                if (err == 1409)   // ERROR_HOTKEY_ALREADY_REGISTERED
-                    HotkeyConflict?.Invoke($"{name}: {b.DisplayName} is already in use by another application.");
-            }
+            // Groups re-register on every focus change, so a conflict is announced once until that key registers again.
+            string conflictKey = $"{name}|{b.Modifiers}|{b.VirtualKey}";
+            if (NativeMethods.RegisterHotKey(hwnd, id, mods, b.VirtualKey))
+                _reportedConflicts.Remove(conflictKey);
+            else if (System.Runtime.InteropServices.Marshal.GetLastWin32Error() == 1409   // ERROR_HOTKEY_ALREADY_REGISTERED
+                     && _reportedConflicts.Add(conflictKey))
+                HotkeyConflict?.Invoke($"{name}: {b.DisplayName} is already in use by another application.");
         }
     }
 
