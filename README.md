@@ -1,8 +1,8 @@
 # Oversight
 
-A low-overhead Windows screen magnifier built for gamers, powered by the native
-Windows Magnification API. Runs in the system tray, activated by rebindable global
-hotkeys, and optionally restricted to specific applications.
+A low-overhead screen magnifier, crosshair overlay and auto clicker built for gamers, for
+Windows and Linux. On Windows it uses the native Magnification API. Runs in the system tray,
+activated by rebindable global hotkeys, and optionally restricted to specific applications.
 
 ---
 
@@ -36,11 +36,30 @@ starts** in **Settings → General** to have it in the tray at sign-in.
 > prompt (**More info → Run anyway**), and with Smart App Control on, Windows may block a version outright. If it
 > blocks an update, Oversight keeps the version you have.
 
+### Linux
+
+1. Download **`Oversight-linux-x64.AppImage`** (or `-arm64`) from the
+   [latest release](https://github.com/TzTech26/OverSight/releases/latest).
+2. `chmod +x Oversight-linux-x64.AppImage` and run it. It adds itself to the app menu; turn on
+   **Run Oversight when you log in** in **Settings → General** to have it in the tray after login.
+
+Settings, Game Profiles and save slots work as on Windows, and a `settings.json` copied from
+Windows loads unchanged (`~/.config/Oversight/settings.json`).
+
+- **X11:** everything works. **Wayland:** hotkeys, the crosshair and the auto clicker go through
+  XWayland, so they work while an X11 window is focused, which includes most games through Steam
+  and Proton, but not native Wayland apps.
+- **Zoom** drives the desktop's own magnifier: GNOME (also Ubuntu, Unity, Budgie), Cinnamon and
+  KDE Plasma. Your magnifier settings are put back when zoom turns off. On other desktops the zoom
+  keys are left alone. Scroll-to-zoom and the zoom animations are Windows-only.
+- **Tray:** needs a StatusNotifier tray (KDE, Cinnamon, XFCE; on GNOME the AppIndicator extension,
+  which Ubuntu ships).
+
 ### Updates
 
 Oversight checks the GitHub releases about once a day and, by default, installs new versions
-on its own: it downloads the zip, checks it against the release's `SHA256SUMS.txt`, swaps the
-exe in place and restarts in the tray. Both behaviours can be turned off in
+on its own: it downloads the zip (or the AppImage on Linux), checks it against the release's
+`SHA256SUMS.txt`, swaps the exe or AppImage in place and restarts in the tray. Both behaviours can be turned off in
 **Settings → General → Updates**, which also has a **Check for updates** button.
 
 ---
@@ -49,6 +68,8 @@ exe in place and restarts in the tray. Both behaviours can be turned off in
 
 - **Windows 11** (build 22000+), 64-bit
   - Build 22621+ (22H2) for the Mica backdrop on the Settings window
+- **Linux**, x64 or arm64, with an X11 session or XWayland, and libXtst / libXi (installed on
+  practically every desktop)
 - To build from source: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 ---
@@ -63,19 +84,25 @@ dotnet publish Oversight/Oversight.csproj -c Release -r win-x64 -o out
 
 A development build (with `Oversight.dll` beside the exe) never updates itself.
 
+On Linux, `tools/build-appimage.sh linux-x64` (or `linux-arm64`, on a machine of that
+architecture) builds `Oversight-linux-x64.AppImage`. `oversight --self-test` checks hotkeys,
+the crosshair overlay, an XTest click, the focused app and settings.json against the current
+X display; CI runs it under Xvfb.
+
 ### Releasing
 
 Push a tag like `v2.3.0`. The [Build workflow](.github/workflows/build.yml) publishes the exe
-with that version, signs it if [SignPath is set up](docs/signing.md), zips it, writes `SHA256SUMS.txt` and creates the GitHub release that
-installed copies update from. Pushes to `main` and pull requests build an unsigned zip as a
-workflow artifact for testing.
+with that version, signs it if [SignPath is set up](docs/signing.md), zips it, builds and self-tests the
+Linux AppImages, writes `SHA256SUMS.txt` and creates the GitHub release that installed copies update
+from. Pushes to `main` and pull requests build an unsigned zip and the AppImages as workflow
+artifacts for testing.
 
 ---
 
 ## Working on the UI
 
 Set `OVERSIGHT_PROFILE` to run an isolated copy beside a normal install. It uses its own
-config folder (`%APPDATA%\Oversight-<profile>`), its own single-instance lock, registers no
+config folder (`%APPDATA%\Oversight-<profile>`, `~/.config/Oversight-<profile>` on Linux), its own single-instance lock, registers no
 global hotkeys, never self-updates, and opens Settings straight away:
 
 ```powershell
@@ -161,7 +188,8 @@ an app and press its start/stop key while that app is focused.
 Settings are persisted to:
 
 ```
-%APPDATA%\Oversight\settings.json
+%APPDATA%\Oversight\settings.json        Windows
+~/.config/Oversight/settings.json       Linux
 ```
 
 The file is human-readable JSON. You can edit it manually while the app is closed.
@@ -171,22 +199,34 @@ The file is human-readable JSON. You can edit it manually while the app is close
 ## Module overview
 
 ```
-Oversight/
+Oversight.Core/                   Shared by both apps (net10.0)
+├── Models/                       AppSettings, HotkeyBinding, zoom/crosshair/auto-clicker slots, VirtualKeys
+└── Services/
+    ├── ConfigStore.cs            JSON load/save, per-feature save slots (schema v5)
+    ├── AppProfile.cs             OVERSIGHT_PROFILE isolated copies
+    └── Updater.cs                GitHub Releases self-update (SHA-256 checked), zip or AppImage
+Oversight/                        Windows (WPF)
 ├── Native/NativeMethods.cs       P/Invoke for Magnification, user32, hooks, SendInput
-├── Models/                       AppSettings, HotkeyBinding, zoom/crosshair/auto-clicker slots
 ├── Services/
-│   ├── ConfigStore.cs            JSON load/save, per-feature save slots (schema v5)
 │   ├── HotkeyManager.cs          RegisterHotKey on a message-only HwndSource
 │   ├── MagnifierService.cs       60-fps Dispatcher timer, fullscreen magnification
 │   ├── CrosshairService.cs       Layered overlay, per-app show/hide
 │   ├── AutoClickerService.cs     SendInput click loop, stop conditions, safety
 │   ├── ProcessWatcher.cs         WinEvent hook (EVENT_SYSTEM_FOREGROUND)
-│   ├── StartupManager.cs         Registry HKCU Run key, Start menu shortcut
-│   └── Updater.cs                GitHub Releases self-update (SHA-256 checked)
+│   └── StartupManager.cs         Registry HKCU Run key, Start menu shortcut
 ├── Tray/TrayManager.cs           WinForms NotifyIcon, context menu, icon generation
 └── UI/
     ├── SettingsWindow.xaml/.cs   Tabbed settings dialog
     └── HotkeyCaptureBox.cs       Custom TextBox that captures key combos
+Oversight.Linux/                  Linux (Avalonia)
+├── Platform/
+│   ├── X11.cs                    Xlib, XTest, XShape, XInput2 P/Invoke
+│   ├── HotkeyManager.cs          XGrabKey on the root window, own connection and thread
+│   ├── KeyMap.cs                 Virtual keys to keysyms, key and button polling
+│   └── Desktop.cs                Autostart, app menu entry, notifications, single instance
+├── Services/                     Magnifier (gsettings / KWin), crosshair window, auto clicker, focus watcher
+├── Ui/                           Tray, Settings window, key boxes and dialogs
+└── SelfTest.cs                   --self-test
 ```
 
 ---
