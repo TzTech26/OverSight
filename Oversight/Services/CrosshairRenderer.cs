@@ -91,7 +91,8 @@ internal static class CrosshairRenderer
             }
 
             case CrosshairShape.Circle:
-                DrawRing(g, pen, c, size - thickness);
+                // Style thickness, not pass thickness: the outline ring must share the colour ring's radius.
+                DrawRing(g, pen, c, size - Math.Clamp(s.Thickness, 1, 16));
                 break;
 
             case CrosshairShape.CircleDot:

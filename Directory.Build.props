@@ -1,7 +1,7 @@
 <Project>
   <!-- Shared by the Windows app, the Linux app and the core library. Release builds override Version from the git tag. -->
   <PropertyGroup>
-    <Version>2.5.0</Version>
+    <Version>2.5.1</Version>
     <Product>Oversight</Product>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

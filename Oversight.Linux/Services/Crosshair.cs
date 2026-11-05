@@ -58,7 +58,8 @@ public static class CrosshairRenderer
                 Dot(dc, brush, Math.Max(3, size / 2f + thickness - 2));   // Size drives the lone dot
                 break;
             case CrosshairShape.Circle:
-                Ring(dc, pen, size - thickness);
+                // Style thickness, not pass thickness: the outline ring must share the colour ring's radius.
+                Ring(dc, pen, size - Math.Clamp(s.Thickness, 1, 16));
                 break;
             case CrosshairShape.CircleDot:
                 Ring(dc, pen, size - thickness);
