@@ -32,7 +32,9 @@ hotkeys, and optionally restricted to specific applications.
 Oversight adds itself to the Start menu on first run. Turn on **Run Oversight when Windows
 starts** in **Settings → General** to have it in the tray at sign-in.
 
-> The exe isn't code-signed, so the first run may show a SmartScreen prompt: **More info → Run anyway**.
+> Releases are unsigned until [code signing](docs/signing.md) is set up, so the first run may show a SmartScreen
+> prompt (**More info → Run anyway**), and with Smart App Control on, Windows may block a version outright. If it
+> blocks an update, Oversight keeps the version you have.
 
 ### Updates
 
@@ -64,7 +66,7 @@ A development build (with `Oversight.dll` beside the exe) never updates itself.
 ### Releasing
 
 Push a tag like `v2.3.0`. The [Build workflow](.github/workflows/build.yml) publishes the exe
-with that version, zips it, writes `SHA256SUMS.txt` and creates the GitHub release that
+with that version, signs it if [SignPath is set up](docs/signing.md), zips it, writes `SHA256SUMS.txt` and creates the GitHub release that
 installed copies update from. Pushes to `main` and pull requests build an unsigned zip as a
 workflow artifact for testing.
 

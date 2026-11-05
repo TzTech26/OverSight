@@ -29,9 +29,77 @@ jobs:
       - name: Publish
         run: dotnet publish Oversight/Oversight.csproj -c Release -r win-x64 -o out ${{ env.VERSION_ARG }}
 
+      # Releases are signed in the sign job; this copy is for trying a build.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unsigned
+          path: |
+            out/Oversight.exe
+            README.md
+            LICENSE
+
+  # Signs the exe through SignPath (free signing for open source, certificate by SignPath Foundation) so Smart App
+  # Control and SmartScreen trust it. Needs the SIGNPATH_API_TOKEN secret and SIGNPATH_* variables (see
+  # docs/signing.md); without them the release goes out unsigned.
+  sign:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: windows-latest
+    outputs:
+      signed: ${{ steps.setup.outputs.ready }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: unsigned
+          path: unsigned
+
+      - name: Check for signing setup
+        id: setup
+        shell: pwsh
+        env:
+          TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        run: |
+          $ready = [bool]$env:TOKEN -and [bool]'${{ vars.SIGNPATH_ORGANIZATION_ID }}'
+          "ready=$($ready.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          if (-not $ready) { "::warning::SignPath isn't set up, so the release is unsigned." }
+          # Laid out the way the SignPath artifact configuration expects.
+          New-Item -ItemType Directory -Force to-sign/win-x64 | Out-Null
+          Copy-Item unsigned/out/Oversight.exe to-sign/win-x64/Oversight.exe
+
+      - name: Upload for signing
+        id: upload
+        if: steps.setup.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: to-sign
+          path: to-sign/
+
+      # Release signing needs an approver to confirm the request in SignPath; this waits up to an hour for that.
+      - name: Sign
+        if: steps.setup.outputs.ready == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.upload.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed
+
+      - name: Check signature
+        if: steps.setup.outputs.ready == 'true'
+        shell: pwsh
+        run: |
+          $s = Get-AuthenticodeSignature signed/win-x64/Oversight.exe
+          "$($s.Status) $($s.SignerCertificate.Subject)"
+          if ($s.Status -ne 'Valid') { throw "Oversight.exe isn't signed" }
+          Copy-Item signed/win-x64/Oversight.exe to-sign/win-x64/Oversight.exe -Force
+
       - name: Zip
         shell: pwsh
-        run: Compress-Archive -Path out/Oversight.exe, README.md, LICENSE -DestinationPath Oversight-win-x64.zip
+        run: Compress-Archive -Path to-sign/win-x64/Oversight.exe, unsigned/README.md, unsigned/LICENSE -DestinationPath Oversight-win-x64.zip
 
       - uses: actions/upload-artifact@v4
         with:
@@ -40,7 +108,7 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: sign
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -56,4 +124,6 @@ jobs:
           files: |
             Oversight-win-x64.zip
             SHA256SUMS.txt
+          # The code signing policy has to be mentioned where people download signed builds.
+          body: "${{ needs.sign.outputs.signed == 'true' && 'Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).' || '' }}"
           generate_release_notes: true
