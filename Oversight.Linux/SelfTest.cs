@@ -41,6 +41,8 @@ public static class SelfTest
         {
             _stage = "checking settings";
             Settings();
+            _stage = "checking the Steam library";
+            Steam();
             nint d = X11.Display;
             if (d == 0) Report(false, "display", "no X display");
             else
@@ -76,6 +78,42 @@ public static class SelfTest
         bool ok = saved == sample && rule is { ProcessName: "eldenring", ZoomProfile: "Sniper", AutoClickerProfile: "Farm" } && !File.Exists(path + ".bad");
         Report(ok, "settings", ok ? $"Windows settings.json round-tripped unchanged ({sample.Length} bytes, {store.ZoomProfileNames.Count} zoom slots, {store.AppRules.Count} game rule)"
             : $"saved file differs from the original (first difference at {Enumerable.Range(0, Math.Min(saved.Length, sample.Length)).FirstOrDefault(i => saved[i] != sample[i])})");
+    }
+
+    /// <summary>A fake Steam library: the game's process name is found and its crash handler, anti-cheat launcher and redistributables are skipped.</summary>
+    private static void Steam()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"oversight-steam-{Environment.ProcessId}");
+        string lib = Path.Combine(root, "lib2");
+        string game = Path.Combine(lib, "steamapps", "common", "Fake Game");
+        Directory.CreateDirectory(Path.Combine(root, "steamapps"));
+        Directory.CreateDirectory(Path.Combine(game, "FakeClient_Data"));
+        Directory.CreateDirectory(Path.Combine(game, "_CommonRedist"));
+        File.WriteAllText(Path.Combine(root, "steamapps", "libraryfolders.vdf"), $$"""
+            "libraryfolders"
+            {
+                "1" { "path" "{{lib}}" }
+            }
+            """);
+        File.WriteAllText(Path.Combine(lib, "steamapps", "appmanifest_480.acf"), """
+            "AppState"
+            {
+                "appid"      "480"
+                "name"       "Fake \"Game\""
+                "installdir" "Fake Game"
+            }
+            """);
+        foreach (var exe in new[] { "FakeGame.exe", "FakeClient.exe", "UnityCrashHandler64.exe", "_CommonRedist/vc_redist.x64.exe" })
+            File.WriteAllText(Path.Combine(game, exe), "MZ");
+        try
+        {
+            var games = SteamLibrary.Scan(root);
+            var g = games.FirstOrDefault();
+            bool ok = games.Count == 1 && g is { AppId: "480", Name: "Fake \"Game\"" } && g.Exes.Count == 1
+                && SteamLibrary.ProcessNameFor(g.Exes[0]) == "FakeClient" && SteamLibrary.ProcessNameFor("/x/BeamNG.drive.x64.exe") == "BeamNG.drive.x6";
+            Report(ok, "steam", ok ? "fake library scanned, game exe picked" : $"got {string.Join("; ", games.Select(x => $"{x.AppId} {x.Name}: {string.Join(", ", x.Exes)}"))}");
+        }
+        finally { Directory.Delete(root, true); }
     }
 
     /// <summary>A grabbed hotkey (including with NumLock on) arrives when the keys are sent with XTest.</summary>

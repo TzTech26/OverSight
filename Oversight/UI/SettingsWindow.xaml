@@ -1121,16 +1121,8 @@
                                 <Button Content="Remove" Click="RemoveRule_Click" Style="{StaticResource DangerButton}"
                                         ui:UiProps.Glyph="&#xE74D;" Margin="0,0,8,0"
                                         ToolTip="Remove the selected game"/>
-                                <Button Click="AddSteam_Click" IsEnabled="False" Margin="0,0,8,0"
-                                        ui:UiProps.Glyph="&#xE7FC;" ToolTip="Coming soon">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Add Steam game…" VerticalAlignment="Center"/>
-                                        <Border Style="{StaticResource Badge}" Margin="8,0,0,0">
-                                            <TextBlock Text="SOON" FontSize="9.5" FontWeight="Bold"
-                                                       Foreground="{DynamicResource AccentTextBrush}"/>
-                                        </Border>
-                                    </StackPanel>
-                                </Button>
+                                <Button Content="Add Steam game…" Click="AddSteam_Click" Margin="0,0,8,0"
+                                        ui:UiProps.Glyph="&#xE7FC;"/>
                                 <Button Content="Add running app…" Click="AddRunningApp_Click"
                                         Style="{StaticResource AccentButton}" ui:UiProps.Glyph="&#xE710;"/>
                             </StackPanel>
@@ -1159,7 +1151,7 @@
                                 <ListBox x:Name="LbRules" SelectionMode="Single" MinHeight="170"
                                          BorderThickness="0" Padding="0"
                                          HorizontalContentAlignment="Stretch"
-                                         ui:UiProps.EmptyText="No games yet. Start one, then click “Add running app…”.">
+                                         ui:UiProps.EmptyText="No games yet. Add a Steam game, or start one and click “Add running app…”.">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="0,1">
@@ -1175,10 +1167,15 @@
                                                 <Border Width="34" Height="34" CornerRadius="6" VerticalAlignment="Center"
                                                         Background="{DynamicResource AccentSoftBrush}"
                                                         BorderBrush="{DynamicResource AccentSoftStrongBrush}" BorderThickness="1">
-                                                    <TextBlock Text="{Binding DisplayName, Converter={StaticResource FirstLetter}}"
-                                                               FontFamily="{StaticResource DisplayFont}" FontWeight="Bold" FontSize="15"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource AccentTextBrush}"/>
+                                                    <Grid>
+                                                        <TextBlock x:Name="Letter" Visibility="Collapsed"
+                                                                   Text="{Binding DisplayName, Converter={StaticResource FirstLetter}}"
+                                                                   FontFamily="{StaticResource DisplayFont}" FontWeight="Bold" FontSize="15"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource AccentTextBrush}"/>
+                                                        <Image Source="{Binding Icon}" Width="24" Height="24"
+                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                    </Grid>
                                                 </Border>
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,12,0">
                                                     <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
@@ -1199,6 +1196,11 @@
                                                           SelectedItem="{Binding SelectedAutoClicker, Mode=TwoWay}"
                                                           AutomationProperties.Name="Auto-clicker slot"/>
                                             </Grid>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                                                    <Setter TargetName="Letter" Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>

@@ -644,8 +644,14 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}">
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
-                                          VerticalAlignment="Center"/>
+                            <Grid>
+                                <TextBlock x:Name="Placeholder" Visibility="Collapsed" IsHitTestVisible="False"
+                                           Margin="{TemplateBinding Padding}" Padding="2,0,0,0" VerticalAlignment="Center"
+                                           Text="{Binding (ui:UiProps.EmptyText), RelativeSource={RelativeSource TemplatedParent}}"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="Center"/>
+                            </Grid>
                         </Border>
                         <!-- Windows 11-style accent underline while focused -->
                         <Border x:Name="Underline" Height="2" CornerRadius="1" Margin="7,0,7,0"
@@ -653,6 +659,9 @@
                                 Visibility="Hidden"/>
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource InputBorderHoverBrush}"/>
                         </Trigger>

@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Oversight.Linux.Platform;
 using Oversight.Linux.Services;
@@ -855,7 +856,7 @@ public partial class SettingsWindow : Window
         CbDefaultAc.ItemsSource = acChoices;
         CbDefaultAc.SelectedItem = ChoiceFor(_config.DefaultAutoClickerProfile, acChoices);
 
-        var rows = _config.AppRules.Select(r => new AppRuleRow(r.ProcessName, r.DisplayLabel, zoomChoices, xhChoices, acChoices,
+        var rows = _config.AppRules.Select(r => new AppRuleRow(r.ProcessName, r.DisplayLabel, AppIcons.ForSteamApp(r.SteamAppId), zoomChoices, xhChoices, acChoices,
             ChoiceFor(r.ZoomProfile, zoomChoices), ChoiceFor(r.CrosshairProfile, xhChoices), ChoiceFor(r.AutoClickerProfile, acChoices), OnRuleRowChanged)).ToList();
         LbRules.ItemsSource = rows;
         TxtNoRules.IsVisible = rows.Count == 0;
@@ -885,11 +886,35 @@ public partial class SettingsWindow : Window
 
     private async void AddRunningApp_Click(object? sender, RoutedEventArgs e)
     {
-        var apps = await Dialogs.PickRunningAppsAsync(this);
+        var apps = await Dialogs.PickAsync(this, "Add running app", "No apps with a window open were found. Start your game, then click Refresh.", X11Apps.Running);
         if (apps.Count == 0) return;
         // New rules default to the open zoom slot, with crosshair and auto-clicker off.
         foreach (var app in apps)
             _config.SetAppRule(app.ProcessName, app.DisplayName, _openZoomName, null, null);
+        RebuildGameProfilesTab();
+        _watcher.Reload();
+    }
+
+    private async void AddSteam_Click(object? sender, RoutedEventArgs e)
+    {
+        var root = SteamLibrary.FindRoot();
+        var games = await Dialogs.PickAsync(this, "Add Steam game", root is null ? "Steam isn't installed." : "No installed Steam games were found.",
+            () => root is null ? [] : SteamLibrary.Scan(root).Select(g => new Dialogs.PickItem(SteamLibrary.ProcessNameFor(g.Exes[0]), g.Name,
+                g.Exes.Count == 1 ? Path.GetFileName(g.Exes[0]) : $"{g.Exes.Count} executables", g.Exes[0], AppIcons.For(g.IconPath), g)).ToList());
+        foreach (var game in games.Select(g => g.Game!))
+        {
+            string exe = game.Exes[0];
+            if (game.Exes.Count > 1)
+            {
+                // Several candidates survived the filter: the user says which one the game runs as.
+                var pick = await Dialogs.PickAsync(this, game.Name, "", () => game.Exes.Select(x => new Dialogs.PickItem(SteamLibrary.ProcessNameFor(x),
+                    Path.GetFileName(x), Path.GetRelativePath(Path.GetDirectoryName(game.InstallDir)!, Path.GetDirectoryName(x)!), x)).ToList(), multiSelect: false);
+                if (pick.Count == 0) continue;
+                exe = pick[0].ExePath!;
+            }
+            _config.SetAppRule(SteamLibrary.ProcessNameFor(exe), game.Name, _openZoomName, null, null, exe, game.AppId);
+        }
+        if (games.Count == 0) return;
         RebuildGameProfilesTab();
         _watcher.Reload();
     }
@@ -943,12 +968,14 @@ public sealed record ColorChoice(string Name, string Hex)
 }
 
 /// <summary>Row of the per-game rules list; the combos write back the chosen slots.</summary>
-public sealed class AppRuleRow(string processName, string displayName, IReadOnlyList<string> zoomChoices, IReadOnlyList<string> crosshairChoices,
+public sealed class AppRuleRow(string processName, string displayName, Bitmap? icon, IReadOnlyList<string> zoomChoices, IReadOnlyList<string> crosshairChoices,
     IReadOnlyList<string> autoClickerChoices, string zoom, string crosshair, string autoClicker, Action<AppRuleRow> changed) : INotifyPropertyChanged
 {
     public string ProcessName { get; } = processName;
     public string DisplayName { get; } = displayName;
-    public string Initial => DisplayName.Length > 0 ? char.ToUpperInvariant(DisplayName[0]).ToString() : "?";
+    public Bitmap? Icon { get; } = icon;
+    public string Initial => InitialOf(DisplayName);
+    public static string InitialOf(string name) => name.FirstOrDefault(char.IsLetterOrDigit) is char c and not '\0' ? char.ToUpperInvariant(c).ToString() : "?";
     public IReadOnlyList<string> ZoomChoices { get; } = zoomChoices;
     public IReadOnlyList<string> CrosshairChoices { get; } = crosshairChoices;
     public IReadOnlyList<string> AutoClickerChoices { get; } = autoClickerChoices;

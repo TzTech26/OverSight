@@ -392,6 +392,7 @@
                     <DockPanel Margin="0,20,0,8">
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
                             <Button Content="Remove" Classes="danger" Click="RemoveRule_Click" ToolTip.Tip="Remove the selected game" />
+                            <Button Content="Add Steam game…" Click="AddSteam_Click" />
                             <Button Content="Add running app…" Classes="accent" Click="AddRunningApp_Click" />
                         </StackPanel>
                         <TextBlock Text="Per-game profiles" Classes="section" Margin="2,0,0,0" VerticalAlignment="Center" />
@@ -407,15 +408,19 @@
                             </Grid>
                             <Panel MinHeight="160">
                                 <TextBlock x:Name="TxtNoRules" Classes="caption" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           Text="No games yet. Start one, then click “Add running app…”." />
+                                           Text="No games yet. Add a Steam game, or start one and click “Add running app…”." />
                                 <ListBox x:Name="LbRules" Background="Transparent">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate x:DataType="ui:AppRuleRow">
                                             <Grid ColumnDefinitions="34,*,140,10,140,10,140">
                                                 <Border Width="34" Height="34" CornerRadius="6" Background="{DynamicResource Os.AccentSoft}"
                                                         BorderBrush="{DynamicResource Os.AccentSoftStrong}" BorderThickness="1">
-                                                    <TextBlock Text="{Binding Initial}" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource Os.AccentText}"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    <Panel>
+                                                        <TextBlock Text="{Binding Initial}" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource Os.AccentText}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNull}}" />
+                                                        <Image Source="{Binding Icon}" Width="24" Height="24" />
+                                                    </Panel>
                                                 </Border>
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
                                                     <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" FontWeight="Medium" />

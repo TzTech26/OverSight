@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Windows;
+using System.IO;
 using System.Windows.Interop;
+using System.Windows.Media;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MessageBox = System.Windows.MessageBox;
 using Oversight.Models;
@@ -1292,6 +1294,7 @@ public partial class SettingsWindow : Window
             {
                 ProcessName        = r.ProcessName,
                 DisplayName        = r.DisplayLabel,
+                Icon               = RuleIcon(r),
                 ZoomChoices        = zoomChoices,
                 CrosshairChoices   = xhChoices,
                 AutoClickerChoices = acChoices,
@@ -1347,21 +1350,61 @@ public partial class SettingsWindow : Window
         _watcher.Reload();
     }
 
+    // The stored exe, else the running process (rules saved before 2.6.0 have no exe path), else Steam's icon.
+    private static ImageSource? RuleIcon(AppRule r)
+    {
+        string? exe = r.ExePath;
+        if (exe is null)
+        {
+            var procs = System.Diagnostics.Process.GetProcessesByName(r.ProcessName);
+            exe = procs.Select(AppIcons.ExeOf).FirstOrDefault(p => p is not null);
+            foreach (var p in procs) p.Dispose();
+        }
+        return AppIcons.For(exe) ?? AppIcons.ForSteamApp(r.SteamAppId);
+    }
+
     private void AddRunningApp_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new RunningAppsDialog(this);
+        var dlg = AppPickerDialog.RunningApps(this);
         if (dlg.ShowDialog() != true) return;
 
         // New rules default to the open zoom slot, with crosshair and auto-clicker off —
         // a sensible (and safe) start; the user opts the auto-clicker in per game.
         foreach (var app in dlg.SelectedApps)
-            _config.SetAppRule(app.ProcessName, app.DisplayName, _openZoomName, null, null);
+            _config.SetAppRule(app.ProcessName, app.DisplayName, _openZoomName, null, null, app.ExePath);
 
         RebuildGameProfilesTab();
         _watcher.Reload();
     }
 
-    private void AddSteam_Click(object sender, RoutedEventArgs e) { /* Steam library picker — planned */ }
+    private void AddSteam_Click(object sender, RoutedEventArgs e)
+    {
+        var root = SteamLibrary.FindRoot();
+        var dlg = new AppPickerDialog(this, "Add Steam game", "Pick a game",
+            root is null ? "Steam isn't installed." : "No installed Steam games were found.",
+            () => root is null ? [] : SteamLibrary.Scan(root).Select(g => new AppPickerDialog.PickerItem(
+                SteamLibrary.ProcessNameFor(g.Exes[0]), g.Name, g.Exes.Count == 1 ? Path.GetFileName(g.Exes[0]) : $"{g.Exes.Count} executables",
+                g.Exes[0], AppIcons.For(g.IconPath) ?? AppIcons.For(g.Exes[0]), g)).ToList());
+        if (dlg.ShowDialog() != true) return;
+
+        foreach (var game in dlg.SelectedApps.Select(a => a.Game!))
+        {
+            string exe = game.Exes[0];
+            if (game.Exes.Count > 1)
+            {
+                // Several candidates survived the filter: the user says which one the game runs as.
+                var pick = new AppPickerDialog(this, game.Name, "Pick the game's executable", "",
+                    () => game.Exes.Select(x => new AppPickerDialog.PickerItem(SteamLibrary.ProcessNameFor(x), Path.GetFileName(x),
+                        Path.GetRelativePath(Path.GetDirectoryName(game.InstallDir)!, Path.GetDirectoryName(x)!), x, AppIcons.For(x))).ToList(), multiSelect: false);
+                if (pick.ShowDialog() != true) continue;
+                exe = pick.SelectedApps[0].ExePath!;
+            }
+            _config.SetAppRule(SteamLibrary.ProcessNameFor(exe), game.Name, _openZoomName, null, null, exe, game.AppId);
+        }
+
+        RebuildGameProfilesTab();
+        _watcher.Reload();
+    }
 
     private void RemoveRule_Click(object sender, RoutedEventArgs e)
     {
@@ -1378,6 +1421,7 @@ public partial class SettingsWindow : Window
     {
         public string ProcessName { get; init; } = string.Empty;
         public string DisplayName { get; init; } = string.Empty;
+        public ImageSource? Icon { get; init; }
         public IReadOnlyList<string> ZoomChoices        { get; init; } = [];
         public IReadOnlyList<string> CrosshairChoices   { get; init; } = [];
         public IReadOnlyList<string> AutoClickerChoices { get; init; } = [];

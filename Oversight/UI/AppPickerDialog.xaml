@@ -1,4 +1,4 @@
-<Window x:Class="Oversight.UI.RunningAppsDialog"
+<Window x:Class="Oversight.UI.AppPickerDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:Oversight.UI"
@@ -12,27 +12,28 @@
 
     <DockPanel Margin="24,20,24,20">
         <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
-            <TextBlock Text="Pick a game" FontFamily="{StaticResource DisplayFont}" FontWeight="SemiBold"
+            <TextBlock x:Name="TxtHeading" Text="Pick a game" FontFamily="{StaticResource DisplayFont}" FontWeight="SemiBold"
                        FontSize="20" Foreground="{DynamicResource TitleTextBrush}"/>
-            <TextBlock Style="{StaticResource RowDesc}"
+            <TextBlock x:Name="TxtHint" Style="{StaticResource RowDesc}"
                        Text="Hold Ctrl or Shift to select several."/>
+            <TextBox x:Name="TxtSearch" Margin="0,12,0,0" TextChanged="TxtSearch_TextChanged"
+                     ui:UiProps.EmptyText="Search" AutomationProperties.Name="Search"/>
         </StackPanel>
 
         <DockPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
-            <Button Content="Refresh" Click="Refresh_Click" Style="{StaticResource GhostButton}"
+            <Button x:Name="BtnRefresh" Content="Refresh" Click="Refresh_Click" Style="{StaticResource GhostButton}"
                     ui:UiProps.Glyph="&#xE72C;"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="Cancel" Click="Cancel_Click" MinWidth="92" IsCancel="True"
                         Style="{StaticResource GhostButton}" Margin="0,0,8,0"/>
-                <Button x:Name="BtnAdd" Content="Add" Click="Add_Click" MinWidth="92"
+                <Button x:Name="BtnAdd" Content="Add" Click="Add_Click" MinWidth="92" IsDefault="True"
                         Style="{StaticResource AccentButton}" ui:UiProps.Glyph="&#xE710;"/>
             </StackPanel>
         </DockPanel>
 
         <ListBox x:Name="LbApps" SelectionMode="Extended" Background="{DynamicResource SurfaceBrush}"
                  MouseDoubleClick="LbApps_MouseDoubleClick"
-                 AutomationProperties.Name="Running apps"
-                 ui:UiProps.EmptyText="No apps with an open window were found. Start your game, then click Refresh.">
+                 AutomationProperties.Name="Apps">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid>
@@ -43,17 +44,27 @@
                         <Border Width="32" Height="32" CornerRadius="6" VerticalAlignment="Center"
                                 Background="{DynamicResource AccentSoftBrush}"
                                 BorderBrush="{DynamicResource AccentSoftStrongBrush}" BorderThickness="1">
-                            <TextBlock Text="{Binding DisplayName, Converter={StaticResource FirstLetter}}"
-                                       FontFamily="{StaticResource DisplayFont}" FontWeight="Bold" FontSize="14"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource AccentTextBrush}"/>
+                            <Grid>
+                                <TextBlock x:Name="Letter" Visibility="Collapsed"
+                                           Text="{Binding DisplayName, Converter={StaticResource FirstLetter}}"
+                                           FontFamily="{StaticResource DisplayFont}" FontWeight="Bold" FontSize="14"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource AccentTextBrush}"/>
+                                <Image Source="{Binding Icon}" Width="22" Height="22"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Grid>
                         </Border>
                         <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" FontWeight="Medium"/>
-                            <TextBlock Text="{Binding ProcessName}" FontSize="11.5" TextTrimming="CharacterEllipsis"
+                            <TextBlock Text="{Binding Detail}" FontSize="11.5" TextTrimming="CharacterEllipsis"
                                        Foreground="{DynamicResource TextMutedBrush}"/>
                         </StackPanel>
                     </Grid>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                            <Setter TargetName="Letter" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

@@ -835,7 +835,7 @@ public sealed class ConfigStore
 
     /// <summary>Adds or updates an app rule. Empty/null slot names mean off for that feature.</summary>
     public void SetAppRule(string processName, string displayName, string? zoomProfile,
-        string? crosshairProfile, string? autoClickerProfile)
+        string? crosshairProfile, string? autoClickerProfile, string? exePath = null, string? steamAppId = null)
     {
         if (string.IsNullOrWhiteSpace(processName)) return;
 
@@ -849,6 +849,8 @@ public sealed class ConfigStore
         r.ZoomProfile        = zoomProfile ?? string.Empty;
         r.CrosshairProfile   = crosshairProfile ?? string.Empty;
         r.AutoClickerProfile = autoClickerProfile ?? string.Empty;
+        if (exePath is not null) r.ExePath = exePath;          // null keeps what the rule already has
+        if (steamAppId is not null) r.SteamAppId = steamAppId;
 
         Save();
     }
