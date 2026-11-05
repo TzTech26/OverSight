@@ -1,18 +1,15 @@
-# Generates Oversight's brand bitmaps from code (no external tools needed):
-#   Oversight\Assets\app.ico          multi-size app/tray/installer icon (16-256 px)
-#   installer\assets\wizard-*.bmp     Inno Setup wizard side + header images (100% and 200%)
+# Generates Oversight's app icon from code (no external tools needed):
+#   Oversight\Assets\app.ico          multi-size app and tray icon (16-256 px)
 #
 # The mark is a scope reticle on a Windows-blue gradient tile — the same artwork as the vector
 # LogoMark in Themes\Controls.xaml. Re-run after changing the design:
-#   powershell -ExecutionPolicy Bypass -File installer\make-brand-assets.ps1
+#   powershell -ExecutionPolicy Bypass -File tools\make-icon.ps1
 
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing
 
 $RepoRoot  = Split-Path -Parent $PSScriptRoot
 $IcoPath   = Join-Path $RepoRoot "Oversight\Assets\app.ico"
-$AssetsDir = Join-Path $PSScriptRoot "assets"
-New-Item -ItemType Directory -Force $AssetsDir | Out-Null
 
 function New-RoundedRect([float]$x, [float]$y, [float]$w, [float]$h, [float]$r) {
   $p = New-Object System.Drawing.Drawing2D.GraphicsPath
@@ -119,63 +116,3 @@ foreach ($e in $entries) { $w.Write($e.Data) }
 $w.Flush(); $fs.Close()
 Write-Host "Wrote $IcoPath ($($entries.Count) sizes)"
 
-# ── Inno Setup wizard images (24-bit BMP) ──
-function Save-Bmp24($bmp, [string]$path) {
-  $out = New-Object System.Drawing.Bitmap($bmp.Width, $bmp.Height, [System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
-  $g = [System.Drawing.Graphics]::FromImage($out); $g.DrawImage($bmp, 0, 0, $bmp.Width, $bmp.Height); $g.Dispose()
-  $out.Save($path, [System.Drawing.Imaging.ImageFormat]::Bmp); $out.Dispose()
-}
-
-# Side panel on the Welcome / Finished pages: Windows dark grey with a soft blue glow, mark + wordmark.
-function New-WizardImage([int]$w, [int]$h) {
-  $bmp = New-Object System.Drawing.Bitmap($w, $h, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
-  $g = [System.Drawing.Graphics]::FromImage($bmp)
-  $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
-  $g.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
-  $g.Clear([System.Drawing.Color]::FromArgb(255, 0x1C, 0x1C, 0x1C))
-
-  $glow = New-Object System.Drawing.Drawing2D.GraphicsPath
-  $glow.AddEllipse([float](-$w * 0.6), [float](-$h * 0.25), [float]($w * 2.2), [float]($h * 0.9))
-  $pgb = New-Object System.Drawing.Drawing2D.PathGradientBrush($glow)
-  $pgb.CenterColor    = [System.Drawing.Color]::FromArgb(90, 0x00, 0x78, 0xD4)
-  $pgb.SurroundColors = @([System.Drawing.Color]::FromArgb(0, 0x00, 0x78, 0xD4))
-  $g.FillPath($pgb, $glow)
-
-  $gridPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(10, 255, 255, 255), [float]1)
-  $step = [int]($w / 8)
-  for ($x = 0; $x -lt $w; $x += $step) { $g.DrawLine($gridPen, $x, 0, $x, $h) }
-  for ($y = 0; $y -lt $h; $y += $step) { $g.DrawLine($gridPen, 0, $y, $w, $y) }
-
-  $mark = [float]($w * 0.46)
-  Draw-Mark $g (($w - $mark) / 2) ([float]($h * 0.30)) $mark
-
-  $font = New-Object System.Drawing.Font("Segoe UI Semibold", [float]($w * 0.12), [System.Drawing.FontStyle]::Regular, [System.Drawing.GraphicsUnit]::Pixel)
-  $sf = New-Object System.Drawing.StringFormat; $sf.Alignment = [System.Drawing.StringAlignment]::Center
-  $g.DrawString("Oversight", $font, [System.Drawing.Brushes]::White,
-                (New-Object System.Drawing.RectangleF(0, [float]($h * 0.30 + $mark + $w * 0.07), $w, [float]($w * 0.2))), $sf)
-  $font2 = New-Object System.Drawing.Font("Segoe UI", [float]($w * 0.058), [System.Drawing.FontStyle]::Regular, [System.Drawing.GraphicsUnit]::Pixel)
-  $muted = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(255, 0xC5, 0xC5, 0xC5))
-  $g.DrawString("Gaming overlay toolkit", $font2, $muted,
-                (New-Object System.Drawing.RectangleF(0, [float]($h * 0.30 + $mark + $w * 0.27), $w, [float]($w * 0.15))), $sf)
-
-  $g.Dispose(); $pgb.Dispose(); $glow.Dispose(); $gridPen.Dispose(); $font.Dispose(); $font2.Dispose(); $muted.Dispose()
-  return $bmp
-}
-
-# Small header image (top-right of inner pages): just the mark on white.
-function New-SmallImage([int]$s) {
-  $bmp = New-Object System.Drawing.Bitmap($s, $s, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
-  $g = [System.Drawing.Graphics]::FromImage($bmp)
-  $g.Clear([System.Drawing.Color]::White)
-  Draw-Mark $g 0 0 $s
-  $g.Dispose()
-  return $bmp
-}
-
-foreach ($scale in 1, 2) {
-  $wiz = New-WizardImage (164 * $scale) (314 * $scale)
-  Save-Bmp24 $wiz (Join-Path $AssetsDir "wizard-large-$($scale * 100).bmp"); $wiz.Dispose()
-  $sm = New-SmallImage (55 * $scale)
-  Save-Bmp24 $sm (Join-Path $AssetsDir "wizard-small-$($scale * 100).bmp"); $sm.Dispose()
-}
-Write-Host "Wrote wizard images to $AssetsDir"

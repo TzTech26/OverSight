@@ -42,4 +42,14 @@ public class ConfigFile
 
     /// <summary>App-wide "Open settings" hotkey — registered regardless of the per-app rules.</summary>
     public HotkeyBinding OpenSettingsHotkey { get; set; } = new();
+
+    /// <summary>App-wide update preferences (General page).</summary>
+    public UpdateSettings Updates { get; set; } = new();
+}
+
+public class UpdateSettings
+{
+    public bool CheckForUpdates { get; set; } = true;
+    public bool InstallAutomatically { get; set; } = true;
+    public DateTime? LastCheck { get; set; }
 }

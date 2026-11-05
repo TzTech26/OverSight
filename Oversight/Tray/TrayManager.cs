@@ -22,6 +22,7 @@ public sealed class TrayManager : IDisposable
     private readonly ProcessWatcher     _watcher;
     private readonly CrosshairService   _crosshair;
     private readonly AutoClickerService _autoClicker;
+    private readonly Updater            _updater;
 
     private readonly NotifyIcon  _tray;
     private readonly Icon        _icon;
@@ -31,8 +32,9 @@ public sealed class TrayManager : IDisposable
 
     public TrayManager(ConfigStore config, HotkeyManager hotkeys,
                        MagnifierService magnifier, ProcessWatcher watcher,
-                       CrosshairService crosshair, AutoClickerService autoClicker)
+                       CrosshairService crosshair, AutoClickerService autoClicker, Updater updater)
     {
+        _updater     = updater;
         _config      = config;
         _hotkeys     = hotkeys;
         _magnifier   = magnifier;
@@ -246,7 +248,7 @@ public sealed class TrayManager : IDisposable
     {
         if (_settingsWindow is null)
         {
-            _settingsWindow = new SettingsWindow(_config, _hotkeys, _watcher, _crosshair, _autoClicker);
+            _settingsWindow = new SettingsWindow(_config, _hotkeys, _watcher, _crosshair, _autoClicker, _updater);
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
             _settingsWindow.Show();
         }

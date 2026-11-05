@@ -18,6 +18,7 @@ namespace Oversight.UI;
 public partial class SettingsWindow : Window
 {
     private readonly ConfigStore        _config;
+    private readonly Updater            _updater;
     private readonly HotkeyManager      _hotkeys;
     private readonly ProcessWatcher     _watcher;
     private readonly CrosshairService   _crosshair;
@@ -62,8 +63,9 @@ public partial class SettingsWindow : Window
     public bool SuppressUnsavedPrompt { get; set; }
 
     public SettingsWindow(ConfigStore config, HotkeyManager hotkeys, ProcessWatcher watcher,
-                          CrosshairService crosshair, AutoClickerService autoClicker)
+                          CrosshairService crosshair, AutoClickerService autoClicker, Updater updater)
     {
+        _updater     = updater;
         _config      = config;
         _hotkeys     = hotkeys;
         _watcher     = watcher;
@@ -165,6 +167,10 @@ public partial class SettingsWindow : Window
         try { ChkStartup.IsChecked = StartupManager.IsEnabled; }
         catch { ChkStartup.IsEnabled = false; }
         HkOpenSettings.BindingValue = Clone(_config.OpenSettingsHotkey);
+        ChkCheckUpdates.IsChecked = _config.Updates.CheckForUpdates;
+        ChkAutoInstall.IsChecked  = _config.Updates.InstallAutomatically;
+        ChkAutoInstall.IsEnabled  = _config.Updates.CheckForUpdates;
+        RenderUpdate();
         _loading = false;
 
         LoadZoomProfile(_config.ActiveZoomProfileName);
@@ -1168,6 +1174,61 @@ public partial class SettingsWindow : Window
                 "Oversight", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
+
+    // ── Updates (app-wide, applied right away) ──
+
+    private void UpdatePrefs_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        _config.Updates.CheckForUpdates      = ChkCheckUpdates.IsChecked == true;
+        _config.Updates.InstallAutomatically = ChkAutoInstall.IsChecked == true;
+        ChkAutoInstall.IsEnabled = _config.Updates.CheckForUpdates;
+        _config.Save();
+    }
+
+    private void RenderUpdate(string? status = null)
+    {
+        var u = _updater.Available;
+        TxtUpdateTitle.Text  = u is null ? $"Oversight {Updater.CurrentVersion}" : $"Oversight {u.Version} is available";
+        TxtUpdateStatus.Text = status ?? (u is not null ? $"You have {Updater.CurrentVersion}."
+            : !Updater.CanSelfUpdate ? "Development build: updates install only into the released exe."
+            : _config.Updates.LastCheck is DateTime t ? $"Up to date. Last checked {(t.Date == DateTime.Today ? t.ToString("t") : t.ToString("MMM d"))}."
+            : "Not checked yet.");
+        BtnUpdateNotes.Visibility = u is null ? Visibility.Collapsed : Visibility.Visible;
+        BtnUpdate.Content = u is null ? "Check for updates" : Updater.CanSelfUpdate ? "Install and restart" : "Download";
+        if (u is null) BtnUpdate.ClearValue(StyleProperty);   // back to the themed default button
+        else BtnUpdate.Style = (Style)FindResource("AccentButton");
+    }
+
+    private async void Update_Click(object sender, RoutedEventArgs e)
+    {
+        BtnUpdate.IsEnabled = false;
+        try
+        {
+            if (_updater.Available is { } u)
+            {
+                if (!Updater.CanSelfUpdate) { OpenUrl(u.PageUrl); return; }
+                TxtUpdateStatus.Text = "Downloading…";
+                if (await _updater.InstallAsync(u) is string error) RenderUpdate(error);
+                return;
+            }
+            TxtUpdateStatus.Text = "Checking…";
+            try { await _updater.CheckAsync(); RenderUpdate(); }
+            catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or TaskCanceledException
+                                          or System.Text.Json.JsonException or KeyNotFoundException)
+            {
+                RenderUpdate(ex is System.Net.Http.HttpRequestException { StatusCode: System.Net.HttpStatusCode.NotFound }
+                    ? "No releases have been published yet."
+                    : "Couldn't reach GitHub. Check your connection and try again.");
+            }
+        }
+        finally { BtnUpdate.IsEnabled = true; }
+    }
+
+    private void UpdateNotes_Click(object sender, RoutedEventArgs e) => OpenUrl(_updater.Available?.PageUrl ?? Updater.ReleasesPage);
+
+    private static void OpenUrl(string url) =>
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
 
     // ═════════════════════════ Game Profiles tab ═════════════════════════
 

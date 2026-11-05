@@ -17,6 +17,8 @@ public partial class App : Application
     private HotkeyManager?      _hotkeys;
     private ProcessWatcher?     _watcher;
     private TrayManager?        _tray;
+    private Updater?            _updater;
+    private DispatcherTimer?    _updateTimer;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -37,6 +39,14 @@ public partial class App : Application
         };
         AppDomain.CurrentDomain.UnhandledException += (_, args) => { MagnifierService.EmergencyReset(); TryStopAutoClicker(); LogError(args.ExceptionObject); };
         AppDomain.CurrentDomain.ProcessExit        += (_, _) => { MagnifierService.EmergencyReset(); TryStopAutoClicker(); };
+
+        // After an update the new copy waits for the old one to exit, then removes the old exe.
+        if (e.Args.SkipWhile(a => a != "--wait").Skip(1).FirstOrDefault() is string pidText && int.TryParse(pidText, out int pid))
+        {
+            try { using var old = System.Diagnostics.Process.GetProcessById(pid); old.WaitForExit(15000); }
+            catch (ArgumentException) { }   // already gone
+        }
+        if (Updater.CanSelfUpdate) Updater.CleanUpAfterUpdate();
 
         // Single-instance guard via a named mutex. The name keeps the pre-rename "OverSight"
         // casing on purpose: mutex names are case-sensitive, and older installs use this one.
@@ -72,7 +82,9 @@ public partial class App : Application
         _autoClicker = new AutoClickerService(_config);
         _hotkeys     = new HotkeyManager(_config.Settings, _magnifier);
         _watcher     = new ProcessWatcher(_config, _hotkeys, _crosshair, _autoClicker);
-        _tray        = new TrayManager(_config, _hotkeys, _magnifier, _watcher, _crosshair, _autoClicker);
+        _updater     = new Updater(_config);
+        _updater.QuitRequested += () => Dispatcher.BeginInvoke(Shutdown);
+        _tray        = new TrayManager(_config, _hotkeys, _magnifier, _watcher, _crosshair, _autoClicker, _updater);
 
         // Wire up hotkey conflict notifications → tray balloon
         _hotkeys.HotkeyConflict += msg =>
@@ -100,10 +112,30 @@ public partial class App : Application
 
         _hotkeys.Start();
         _watcher.Start();
+
+        if (Updater.CanSelfUpdate)
+        {
+            // No installer: the Start menu entry is (re)written each start and follows the exe if it moves.
+            try { StartMenu.Install(); }
+            catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or UnauthorizedAccessException or IOException) { }
+
+            if (e.Args.Contains("--updated")) _tray.ShowBalloon("Oversight updated", $"You're now on version {Updater.CurrentVersion}.");
+
+            // Checks GitHub at most every 20 hours (the updater keeps track); the timer just gives it a chance to.
+            _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
+            _updateTimer.Tick += async (_, _) =>
+            {
+                _updateTimer.Interval = TimeSpan.FromMinutes(30);
+                await _updater.CheckInBackgroundAsync(u =>
+                    _tray?.ShowBalloon($"Oversight {u.Version} is available", "Open Settings › General to install it."));
+            };
+            _updateTimer.Start();
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _updateTimer?.Stop();
         _magnifier?.Deactivate(animate: false);
         _autoClicker?.StopRun();
         _hotkeys?.Stop();

@@ -13,93 +13,78 @@ hotkeys, and optionally restricted to specific applications.
 | **Fullscreen live zoom** | Entire display magnified around the cursor via `MagSetFullscreenTransform`. ~60 fps. No overlay window. |
 | **Scroll-to-zoom** | Mouse wheel adjusts zoom level while active (captured via `WH_MOUSE_LL`). |
 | **Hotkey + / −** | Configurable zoom-in / zoom-out key bindings. |
-| **Process whitelist** | Hotkeys only fire when a whitelisted app is in focus; otherwise keys pass through normally. |
+| **Game Profiles** | Pick a zoom, crosshair and auto-clicker save slot per game; they switch automatically when that game is focused, with separate choices for everywhere else. |
 | **Auto clicker** | Repeats any key or mouse button on a bindable start/stop key. Adjustable interval (with optional random jitter), single/double click, fixed screen point, and stop conditions: until stopped, for a duration, or for a click count. Toggle or hold activation. Per-game via Game Profiles; off everywhere by default. |
 | **Rebindable hotkeys** | Every action is configurable via a "click to capture" UI. Modifier combos supported. |
 | **Start on boot** | Optional registry Run key (HKCU). |
+| **Self-updating** | Installs new GitHub releases on its own after checking their SHA-256. |
 | **System tray** | Icon changes colour when zoom is active. Context menu for toggle, settings, quit. |
 
 ---
 
-## Install (end users)
+## Install
 
-Download and run **`Oversight-Setup-<version>.exe`**. It's a self-contained
-installer — no .NET or other prerequisites needed, and it installs per-user with
-no admin/UAC prompt. The latest tested installer lives in
-[releases/verified/](releases/verified/).
+1. Download **`Oversight-win-x64.zip`** from the
+   [latest release](https://github.com/TzTech26/OverSight/releases/latest).
+2. Unzip `Oversight.exe` into a folder you own, for example `%LOCALAPPDATA%\Programs\Oversight`,
+   and run it. It's a single self-contained exe: no .NET or installer needed, no admin prompt.
 
-> The first run may show a Windows SmartScreen prompt because the .exe isn't
-> code-signed. Click **More info → Run anyway**. See
-> [releases/README.md](releases/README.md) for details.
+Oversight adds itself to the Start menu on first run. Turn on **Run Oversight when Windows
+starts** in **Settings → General** to have it in the tray at sign-in.
+
+> The exe isn't code-signed, so the first run may show a SmartScreen prompt: **More info → Run anyway**.
+
+### Updates
+
+Oversight checks the GitHub releases about once a day and, by default, installs new versions
+on its own: it downloads the zip, checks it against the release's `SHA256SUMS.txt`, swaps the
+exe in place and restarts in the tray. Both behaviours can be turned off in
+**Settings → General → Updates**, which also has a **Check for updates** button.
 
 ---
 
 ## Requirements
 
 - **Windows 11** (build 22000+), 64-bit
-  - Build 22621+ (22H2) required for Mica backdrop on the Settings window
-  - Windows 10 is explicitly not supported (`SupportedOSPlatformVersion = 10.0.22000.0`)
-- The installer **bundles** the .NET 8 runtime, so end users need nothing extra.
-  To build/run from source you need the .NET 8 SDK
-  ([download](https://dotnet.microsoft.com/download/dotnet/8.0)).
+  - Build 22621+ (22H2) for the Mica backdrop on the Settings window
+- To build from source: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 ---
 
 ## Build from source
 
 ```powershell
-# Requires .NET 8 SDK  https://dotnet.microsoft.com/download/dotnet/8.0
 dotnet build Oversight.sln -c Release
+# The release exe (single file, bundles the .NET runtime):
+dotnet publish Oversight/Oversight.csproj -c Release -r win-x64 -o out
 ```
 
-Build output is redirected off the network share (see the `BaseOutputPath` in
-`Oversight/Oversight.csproj`); the exe lands at:
+A development build (with `Oversight.dll` beside the exe) never updates itself.
 
-```
-%LOCALAPPDATA%\Oversight_build\bin\x64\Release\net8.0-windows10.0.22621.0\win-x64\Oversight.exe
-```
+### Releasing
 
-To publish a self-contained build (bundles the .NET runtime):
-
-```powershell
-dotnet publish Oversight/Oversight.csproj -c Release -r win-x64 --self-contained true
-```
+Push a tag like `v2.3.0`. The [Build workflow](.github/workflows/build.yml) publishes the exe
+with that version, zips it, writes `SHA256SUMS.txt` and creates the GitHub release that
+installed copies update from. Pushes to `main` and pull requests build an unsigned zip as a
+workflow artifact for testing.
 
 ---
 
 ## Working on the UI
 
-Set `OVERSIGHT_PROFILE` to run an isolated copy beside a normal install — it uses its own
+Set `OVERSIGHT_PROFILE` to run an isolated copy beside a normal install. It uses its own
 config folder (`%APPDATA%\Oversight-<profile>`), its own single-instance lock, registers no
-global hotkeys, and opens Settings straight away:
+global hotkeys, never self-updates, and opens Settings straight away:
 
 ```powershell
 $env:OVERSIGHT_PROFILE = "dev"
-& "$env:LOCALAPPDATA\Oversight_buildind\Debug
-et8.0-windows10.0.22621.0\win-x64\Oversight.exe"
+dotnet run --project Oversight
 ```
 
 Shared control styles live in `Oversight/Themes/Controls.xaml`; colours are in
 `Themes/Dark.xaml` / `Themes/Light.xaml` (swapped live with the Windows theme). Unhandled
-errors are written to `error.log` in the config folder.
-
----
-
-## Installer & releases
-
-Building a distributable installer and managing versioned releases is handled by
-the scripts in [installer/](installer/), which output to [releases/](releases/):
-
-```powershell
-# Build the installer (-> releases\beta\)
-powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
-# After testing, promote it (-> releases\verified\, the file you publish)
-powershell -ExecutionPolicy Bypass -File installer\promote-release.ps1 -Version <ver>
-```
-
-See [installer/README.md](installer/README.md) for what each script does and
-[releases/README.md](releases/README.md) for the channel layout, version manifest,
-and website-publishing notes.
+errors are written to `error.log` in the config folder. `tools/make-icon.ps1` regenerates
+the app icon.
 
 ---
 
@@ -112,8 +97,9 @@ and website-publishing notes.
 | Zoom out | **Ctrl + −** |
 | Show / hide crosshair | **Ctrl + Alt + X** |
 | Start / stop auto-clicker | **Ctrl + Alt + C** |
+| Open settings | **Ctrl + Alt + Z** |
 
-All bindings are configurable in **Settings → Hotkeys**.
+Each feature's keybinds are on its own page (Zoom, Crosshair, Auto Clicker) and saved with that slot; **Open settings** is in **General**.
 
 ---
 
@@ -122,18 +108,15 @@ All bindings are configurable in **Settings → Hotkeys**.
 1. **Launch** — A magnifier icon appears in the system tray.
 2. **Press F12** — The entire screen magnifies 2× around your cursor.
 3. **Scroll wheel** — Increase or decrease zoom while active.
-4. **Press F12 again** (or Escape concept: re-press toggle) — Exits zoom.
+4. **Press F12 again** — Exits zoom.
 5. **Tray icon** → **Settings** — Configure everything.
 
-### Adding a game to the whitelist
+### Per-game setup
 
-1. Open **Settings → Whitelist**.
-2. Click **Browse .exe…** and select the game's executable, or type the process
-   name (e.g. `cs2`, `Overwatch`, `RocketLeague`) and click **Add**.
-3. Enable **"Only activate for apps on the Whitelist"** in **General**.
-4. Click **OK**.
-
-Hotkeys will now pass through in all other applications.
+1. Open **Settings → Game Profiles**.
+2. Click **Add running app…** and pick the game.
+3. Choose its zoom, crosshair and auto-clicker slots (or *(off)*). Changes apply right away.
+4. Under **Everywhere else**, choose what runs outside your listed games.
 
 ---
 
@@ -196,7 +179,8 @@ Oversight/
 │   ├── CrosshairService.cs       Layered overlay, per-app show/hide
 │   ├── AutoClickerService.cs     SendInput click loop, stop conditions, safety
 │   ├── ProcessWatcher.cs         WinEvent hook (EVENT_SYSTEM_FOREGROUND)
-│   └── StartupManager.cs         Registry HKCU Run key
+│   ├── StartupManager.cs         Registry HKCU Run key, Start menu shortcut
+│   └── Updater.cs                GitHub Releases self-update (SHA-256 checked)
 ├── Tray/TrayManager.cs           WinForms NotifyIcon, context menu, icon generation
 └── UI/
     ├── SettingsWindow.xaml/.cs   Tabbed settings dialog
@@ -214,3 +198,9 @@ Oversight/
   and removed on deactivation to avoid any latency impact during normal play.
 - All magnifier calls are on the WPF Dispatcher (UI thread); no background threads
   are involved in the hot path.
+
+---
+
+## License
+
+[MIT](LICENSE)

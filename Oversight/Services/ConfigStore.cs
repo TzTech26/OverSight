@@ -73,6 +73,9 @@ public sealed class ConfigStore
 
     public HotkeyBinding OpenSettingsHotkey => _openSettingsHotkey;
 
+    /// <summary>Update preferences; edit in place, then <see cref="Save"/>.</summary>
+    public UpdateSettings Updates { get; private set; } = new();
+
     /// <summary>Raised when slots are added/removed/renamed or an active slot changes.</summary>
     public event Action? ProfilesChanged;
 
@@ -149,6 +152,7 @@ public sealed class ConfigStore
             ActiveCrosshairProfileName   = file.ActiveCrosshairProfile;
             ActiveAutoClickerProfileName = file.ActiveAutoClickerProfile;
             _openSettingsHotkey       = file.OpenSettingsHotkey ?? DefaultOpenSettingsHotkey();
+            Updates                   = file.Updates ?? new();
         }
         else
         {
@@ -370,6 +374,7 @@ public sealed class ConfigStore
                 DefaultCrosshairProfile   = DefaultCrosshairProfile,
                 DefaultAutoClickerProfile = DefaultAutoClickerProfile,
                 OpenSettingsHotkey        = _openSettingsHotkey,
+                Updates                   = Updates,
             };
             File.WriteAllText(ConfigPath, JsonSerializer.Serialize(file, JsonOpts));
         }

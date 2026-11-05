@@ -1272,6 +1272,55 @@
                                 </DockPanel>
                             </Border>
 
+                            <TextBlock Text="Updates" Style="{StaticResource SectionHeader}"/>
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Grid Style="{StaticResource SettingRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
+                                            <TextBlock x:Name="TxtUpdateTitle" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock x:Name="TxtUpdateStatus" Style="{StaticResource RowDesc}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <Button x:Name="BtnUpdateNotes" Grid.Column="1" Content="What&apos;s new" Style="{StaticResource GhostButton}"
+                                                Margin="0,0,8,0" VerticalAlignment="Center" Click="UpdateNotes_Click"/>
+                                        <Button x:Name="BtnUpdate" Grid.Column="2" Content="Check for updates" MinWidth="120"
+                                                VerticalAlignment="Center" Click="Update_Click"/>
+                                    </Grid>
+                                    <Border Style="{StaticResource RowDivider}"/>
+                                    <Grid Style="{StaticResource SettingRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
+                                            <TextBlock Text="Check for updates automatically" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Style="{StaticResource RowDesc}" Text="Looks at the project&apos;s GitHub releases about once a day. Nothing else is sent."/>
+                                        </StackPanel>
+                                        <CheckBox x:Name="ChkCheckUpdates" Grid.Column="1" VerticalAlignment="Center"
+                                                  AutomationProperties.Name="Check for updates automatically"
+                                                  Checked="UpdatePrefs_Changed" Unchecked="UpdatePrefs_Changed"/>
+                                    </Grid>
+                                    <Border Style="{StaticResource RowDivider}"/>
+                                    <Grid Style="{StaticResource SettingRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
+                                            <TextBlock Text="Install updates automatically" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Style="{StaticResource RowDesc}" Text="Downloads the new version, checks its published checksum and restarts Oversight in the tray."/>
+                                        </StackPanel>
+                                        <CheckBox x:Name="ChkAutoInstall" Grid.Column="1" VerticalAlignment="Center"
+                                                  AutomationProperties.Name="Install updates automatically"
+                                                  Checked="UpdatePrefs_Changed" Unchecked="UpdatePrefs_Changed"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
                             <TextBlock Text="About" Style="{StaticResource SectionHeader}"/>
                             <Border Style="{StaticResource Card}" Padding="20,18">
                                 <Grid>
