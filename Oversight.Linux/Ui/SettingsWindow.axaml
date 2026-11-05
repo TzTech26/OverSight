@@ -1,0 +1,501 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="using:Oversight.Linux.Ui"
+        xmlns:svc="using:Oversight.Linux.Services"
+        x:Class="Oversight.Linux.Ui.SettingsWindow"
+        Title="Oversight" Width="980" Height="720" MinWidth="860" MinHeight="520"
+        WindowStartupLocation="CenterScreen" Icon="avares://oversight/Assets/oversight.png"
+        Background="{DynamicResource Os.Window}" Foreground="{DynamicResource Os.Text}">
+    <Window.Styles>
+        <Style Selector="ListBox#Nav ListBoxItem">
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="Margin" Value="0,1" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="ListBox#Nav ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="ListBox#Nav ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Os.AccentSoftStrong}" />
+            <Setter Property="Foreground" Value="{DynamicResource Os.Text}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Os.Accent}" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
+        </Style>
+        <Style Selector="ListBox#Nav ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Os.AccentSoft}" />
+        </Style>
+        <Style Selector="Ellipse.dirty">
+            <Setter Property="Width" Value="7" />
+            <Setter Property="Height" Value="7" />
+            <Setter Property="Fill" Value="{DynamicResource Os.Hot}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+        </Style>
+        <Style Selector="StackPanel.page">
+            <Setter Property="Margin" Value="32,20,32,32" />
+            <Setter Property="MaxWidth" Value="860" />
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="220,*">
+        <!-- Sidebar -->
+        <Border Background="{DynamicResource Os.Sidebar}">
+            <DockPanel Margin="12,18,12,14">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,22">
+                    <Image Source="{StaticResource Os.Logo}" Width="36" Height="36" />
+                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Oversight" FontSize="17" FontWeight="SemiBold" />
+                        <TextBlock Text="Gaming overlay toolkit" Classes="caption" FontSize="11.5" />
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock x:Name="TxtSidebarVersion" DockPanel.Dock="Bottom" Classes="caption" Margin="10,0,0,0" />
+                <ListBox x:Name="Nav" Background="Transparent" SelectionChanged="Nav_SelectionChanged">
+                    <ListBoxItem x:Name="NavZoom" Tag="zoom">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="Zoom" /><Ellipse x:Name="DotZoom" Classes="dirty" IsVisible="False" /></StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="NavXh" Tag="crosshair">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="Crosshair" /><Ellipse x:Name="DotXh" Classes="dirty" IsVisible="False" /></StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="NavAc" Tag="autoclicker">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="Auto Clicker" /><Ellipse x:Name="DotAc" Classes="dirty" IsVisible="False" /></StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="games" Content="Game Profiles" />
+                    <ListBoxItem Tag="general" Content="General" />
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Panel>
+                <!-- ═══════════ Zoom ═══════════ -->
+                <StackPanel x:Name="PageZoom" Classes="page">
+                    <TextBlock Text="Zoom" Classes="pageTitle" />
+                    <TextBlock Classes="pageSubtitle" Text="Saved per slot. Assign slots to games in Game Profiles." />
+                    <Border x:Name="ZoomUnsupported" Classes="callout" IsVisible="False">
+                        <TextBlock TextWrapping="Wrap" Text="Zoom drives the GNOME, Cinnamon or KDE Plasma magnifier, and this desktop isn't one of them." />
+                    </Border>
+
+                    <Border Classes="card slot">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="22">
+                                <TextBlock Text="ZOOM SAVE SLOT" Classes="overline" />
+                                <Border x:Name="PillZoomUnsaved" Classes="unsaved" IsVisible="False">
+                                    <TextBlock Text="Unsaved changes" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Os.Hot}" />
+                                </Border>
+                            </StackPanel>
+                            <ComboBox x:Name="CbProfile" Margin="0,8,0,0" HorizontalAlignment="Stretch" SelectionChanged="CbProfile_Changed" />
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0" Spacing="8">
+                                <Button Content="Save" Classes="accent" MinWidth="88" Click="SaveProfile_Click" />
+                                <Button Content="Save as…" Click="SaveAsProfile_Click" />
+                                <Button Content="New" Click="NewProfile_Click" />
+                                <Button Content="Rename" Click="RenameProfile_Click" />
+                                <Button x:Name="BtnDeleteProfile" Content="Delete" Classes="danger" Click="DeleteProfile_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Magnification" Classes="section" />
+                    <Border Classes="card">
+                        <StackPanel>
+                            <ui:SettingRow Header="Default zoom level">
+                                <StackPanel Orientation="Horizontal">
+                                    <Slider x:Name="SliderZoom" Minimum="1.25" Maximum="16" TickFrequency="0.25" IsSnapToTickEnabled="True" ValueChanged="SliderZoom_Changed" />
+                                    <TextBlock x:Name="TxtZoom" Classes="value" />
+                                </StackPanel>
+                            </ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Zoom step" Description="Change per zoom key press or wheel notch.">
+                                <StackPanel Orientation="Horizontal">
+                                    <Slider x:Name="SliderStep" Minimum="0.1" Maximum="2" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="SliderStep_Changed" />
+                                    <TextBlock x:Name="TxtStep" Classes="value" />
+                                </StackPanel>
+                            </ui:SettingRow>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Keybinds" Classes="section" />
+                    <Border Classes="card">
+                        <StackPanel>
+                            <ui:SettingRow Header="Zoom activation">
+                                <ComboBox x:Name="CbActivation" Width="200" SelectionChanged="ZoomControl_Changed" />
+                            </ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Toggle zoom on / off"><ui:HotkeyBox x:Name="HkToggle" /></ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Zoom in"><ui:HotkeyBox x:Name="HkZoomIn" /></ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Zoom out"><ui:HotkeyBox x:Name="HkZoomOut" /></ui:SettingRow>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ═══════════ Crosshair ═══════════ -->
+                <StackPanel x:Name="PageXh" Classes="page" IsVisible="False">
+                    <TextBlock Text="Crosshair" Classes="pageTitle" />
+                    <TextBlock Classes="pageSubtitle" Text="Set where it shows in Game Profiles." />
+
+                    <Border Classes="card slot">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="22">
+                                <TextBlock Text="CROSSHAIR SAVE SLOT" Classes="overline" />
+                                <Border x:Name="PillXhUnsaved" Classes="unsaved" IsVisible="False">
+                                    <TextBlock Text="Unsaved changes" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Os.Hot}" />
+                                </Border>
+                            </StackPanel>
+                            <ComboBox x:Name="CbXhProfile" Margin="0,8,0,0" HorizontalAlignment="Stretch" SelectionChanged="CbXhProfile_Changed" />
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0" Spacing="8">
+                                <Button Content="Save" Classes="accent" MinWidth="88" Click="SaveXh_Click" />
+                                <Button Content="Save as…" Click="SaveAsXh_Click" />
+                                <Button Content="New" Click="NewXh_Click" />
+                                <Button Content="Rename" Click="RenameXh_Click" />
+                                <Button x:Name="BtnDeleteXh" Content="Delete" Classes="danger" Click="DeleteXh_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Style" Classes="section" />
+                    <Grid ColumnDefinitions="*,14,Auto">
+                        <Border Classes="card" Padding="16,6">
+                            <StackPanel>
+                                <Grid ColumnDefinitions="96,*" Margin="0,6">
+                                    <TextBlock Text="Shape" VerticalAlignment="Center" />
+                                    <ComboBox x:Name="CbXhShape" Grid.Column="1" HorizontalAlignment="Stretch" SelectionChanged="XhStyle_Changed" />
+                                </Grid>
+                                <Grid ColumnDefinitions="96,*,10,100" Margin="0,6">
+                                    <TextBlock Text="Colour" VerticalAlignment="Center" />
+                                    <ComboBox x:Name="CbXhColor" Grid.Column="1" HorizontalAlignment="Stretch" SelectionChanged="CbXhColor_Changed">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="ui:ColorChoice">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border Width="16" Height="16" CornerRadius="5" Background="{Binding Brush}" BorderBrush="#55000000" BorderThickness="1" />
+                                                    <TextBlock Text="{Binding Name}" Margin="9,0,0,0" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <TextBox x:Name="TxtXhHex" Grid.Column="3" MaxLength="7" TextChanged="TxtXhHex_Changed" ToolTip.Tip="Custom colour as #RRGGBB" />
+                                </Grid>
+                                <Border Classes="divider" Margin="0,6" />
+                                <Grid ColumnDefinitions="96,*,Auto" Margin="0,4">
+                                    <TextBlock Text="Size" VerticalAlignment="Center" />
+                                    <Slider x:Name="SliderXhSize" Grid.Column="1" Width="NaN" Minimum="8" Maximum="128" TickFrequency="2" IsSnapToTickEnabled="True" ValueChanged="XhSlider_Changed" />
+                                    <TextBlock x:Name="TxtXhSize" Grid.Column="2" Classes="value" />
+                                </Grid>
+                                <Grid ColumnDefinitions="96,*,Auto" Margin="0,4">
+                                    <TextBlock Text="Thickness" VerticalAlignment="Center" ToolTip.Tip="Line width. Also scales the centre dot." />
+                                    <Slider x:Name="SliderXhThickness" Grid.Column="1" Width="NaN" Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="XhSlider_Changed" />
+                                    <TextBlock x:Name="TxtXhThickness" Grid.Column="2" Classes="value" />
+                                </Grid>
+                                <Grid ColumnDefinitions="96,*,Auto" Margin="0,4">
+                                    <TextBlock Text="Gap" VerticalAlignment="Center" ToolTip.Tip="Clear space at the centre of cross shapes." />
+                                    <Slider x:Name="SliderXhGap" Grid.Column="1" Width="NaN" Minimum="0" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="XhSlider_Changed" />
+                                    <TextBlock x:Name="TxtXhGap" Grid.Column="2" Classes="value" />
+                                </Grid>
+                                <Grid ColumnDefinitions="96,*,Auto" Margin="0,4">
+                                    <TextBlock Text="Opacity" VerticalAlignment="Center" />
+                                    <Slider x:Name="SliderXhOpacity" Grid.Column="1" Width="NaN" Minimum="10" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="XhSlider_Changed" />
+                                    <TextBlock x:Name="TxtXhOpacity" Grid.Column="2" Classes="value" />
+                                </Grid>
+                                <Border Classes="divider" Margin="0,6" />
+                                <ui:SettingRow Header="Centre dot" Description="Dot at the aim point." Margin="-16,0">
+                                    <ToggleSwitch x:Name="ChkXhCenterDot" IsCheckedChanged="XhStyle_Changed" />
+                                </ui:SettingRow>
+                                <ui:SettingRow Header="Dark outline" Description="Keeps the crosshair visible on any background." Margin="-16,0">
+                                    <ToggleSwitch x:Name="ChkXhOutline" IsCheckedChanged="XhStyle_Changed" />
+                                </ui:SettingRow>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Classes="card" Padding="14" VerticalAlignment="Top">
+                            <StackPanel Width="200">
+                                <StackPanel Orientation="Horizontal" Margin="2,0,0,10">
+                                    <Ellipse Width="7" Height="7" Fill="{DynamicResource Os.Success}" VerticalAlignment="Center" />
+                                    <TextBlock Text="LIVE PREVIEW" Classes="overline" Margin="8,0,0,0" />
+                                </StackPanel>
+                                <Border Width="200" Height="200" CornerRadius="6" ClipToBounds="True" BorderBrush="{DynamicResource Os.Line}" BorderThickness="1">
+                                    <Border.Background>
+                                        <RadialGradientBrush RadiusX="75%" RadiusY="75%">
+                                            <GradientStop Color="#55565C" Offset="0" />
+                                            <GradientStop Color="#303135" Offset="0.6" />
+                                            <GradientStop Color="#18191B" Offset="1" />
+                                        </RadialGradientBrush>
+                                    </Border.Background>
+                                    <svc:CrosshairView x:Name="XhPreview" />
+                                </Border>
+                                <TextBlock Classes="caption" Margin="2,10,0,0" Text="Edits also show live at the centre of the screen while this page is open." />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <TextBlock Text="Keybinds" Classes="section" />
+                    <Border Classes="card">
+                        <StackPanel>
+                            <ui:SettingRow Header="Show / hide crosshair"><ui:HotkeyBox x:Name="HkCrosshair" /></ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Hide while held (ADS)" Description="Bind your aim-down-sights button.">
+                                <ui:HotkeyBox x:Name="HkHoldHideCrosshair" AllowMouseButtons="True" />
+                            </ui:SettingRow>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ═══════════ Auto Clicker ═══════════ -->
+                <StackPanel x:Name="PageAc" Classes="page" IsVisible="False">
+                    <TextBlock Text="Auto Clicker" Classes="pageTitle" />
+                    <TextBlock Classes="pageSubtitle" Text="Never runs on its own: assign a slot to a game in Game Profiles, then press its start/stop key." />
+
+                    <Border Classes="card slot">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Height="22">
+                                <TextBlock Text="AUTO-CLICKER SAVE SLOT" Classes="overline" />
+                                <Border x:Name="PillAcUnsaved" Classes="unsaved" IsVisible="False">
+                                    <TextBlock Text="Unsaved changes" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Os.Hot}" />
+                                </Border>
+                            </StackPanel>
+                            <ComboBox x:Name="CbAcProfile" Margin="0,8,0,0" HorizontalAlignment="Stretch" SelectionChanged="CbAcProfile_Changed" />
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0" Spacing="8">
+                                <Button Content="Save" Classes="accent" MinWidth="88" Click="SaveAc_Click" />
+                                <Button Content="Save as…" Click="SaveAsAc_Click" />
+                                <Button Content="New" Click="NewAc_Click" />
+                                <Button Content="Rename" Click="RenameAc_Click" />
+                                <Button x:Name="BtnDeleteAc" Content="Delete" Classes="danger" Click="DeleteAc_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Action" Classes="section" />
+                    <Border Classes="card">
+                        <StackPanel>
+                            <ui:SettingRow Header="Key or button to repeat" Description="Left mouse can't be captured here; use Left click.">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ui:HotkeyBox x:Name="HkAcAction" AllowMouseButtons="True" />
+                                    <Button Content="Left click" Click="AcSetLeftClick_Click" ToolTip.Tip="Use the left mouse button." />
+                                </StackPanel>
+                            </ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow x:Name="RowAcClickType" Header="Mouse click type">
+                                <ComboBox x:Name="CbAcClickType" Width="200" SelectionChanged="AcControl_Changed" />
+                            </ui:SettingRow>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Timing" Classes="section" />
+                    <Border Classes="card">
+                        <StackPanel>
+                            <ui:SettingRow Header="Interval" Description="Minimum 10 ms (100 clicks per second).">
+                                <StackPanel Orientation="Horizontal">
+                                    <Slider x:Name="SliderAcInterval" Minimum="10" Maximum="2000" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="AcSlider_Changed" />
+                                    <TextBlock x:Name="TxtAcInterval" Classes="value" MinWidth="76" />
+                                </StackPanel>
+                            </ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Random jitter" Description="Randomizes each interval by up to this much.">
+                                <StackPanel Orientation="Horizontal">
+                                    <Slider x:Name="SliderAcJitter" Minimum="0" Maximum="500" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="AcSlider_Changed" />
+                                    <TextBlock x:Name="TxtAcJitter" Classes="value" MinWidth="76" />
+                                    <ToggleSwitch x:Name="ChkAcJitter" Margin="16,0,0,0" IsCheckedChanged="AcControl_Changed" />
+                                </StackPanel>
+                            </ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Adaptive speed limit" Description="Recommended. Slows down when the app can't keep up.">
+                                <ToggleSwitch x:Name="ChkAcAdaptive" IsCheckedChanged="AcControl_Changed" />
+                            </ui:SettingRow>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Stop condition" Classes="section" />
+                    <Border Classes="card">
+                        <StackPanel>
+                            <ui:SettingRow Header="Stop after">
+                                <ComboBox x:Name="CbAcRepeat" Width="200" SelectionChanged="AcControl_Changed" />
+                            </ui:SettingRow>
+                            <StackPanel x:Name="RowAcSeconds" IsVisible="False">
+                                <Border Classes="divider" />
+                                <ui:SettingRow Header="Duration (seconds)"><TextBox x:Name="TxtAcSeconds" Width="120" MaxLength="6" TextChanged="AcControl_Changed" /></ui:SettingRow>
+                            </StackPanel>
+                            <StackPanel x:Name="RowAcCount" IsVisible="False">
+                                <Border Classes="divider" />
+                                <ui:SettingRow Header="Number of clicks"><TextBox x:Name="TxtAcCount" Width="120" MaxLength="7" TextChanged="AcControl_Changed" /></ui:SettingRow>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Position" Classes="section" />
+                    <Border Classes="card">
+                        <StackPanel>
+                            <ui:SettingRow x:Name="RowAcFixedToggle" Header="Click at a fixed screen point" Description="Clicks at the X, Y below instead of the cursor.">
+                                <ToggleSwitch x:Name="ChkAcFixedPos" IsCheckedChanged="AcControl_Changed" />
+                            </ui:SettingRow>
+                            <StackPanel x:Name="RowAcFixedPos" IsVisible="False">
+                                <Border Classes="divider" />
+                                <Grid ColumnDefinitions="Auto,100,Auto,100,*" Margin="16,10">
+                                    <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                    <TextBox x:Name="TxtAcX" Grid.Column="1" MaxLength="6" TextChanged="AcControl_Changed" />
+                                    <TextBlock Grid.Column="2" Text="Y" VerticalAlignment="Center" Margin="18,0,10,0" />
+                                    <TextBox x:Name="TxtAcY" Grid.Column="3" MaxLength="6" TextChanged="AcControl_Changed" />
+                                    <Button x:Name="BtnAcCapturePos" Grid.Column="4" Content="Pick point on screen…" HorizontalAlignment="Right"
+                                            Click="AcCapturePos_Click" ToolTip.Tip="Click, then click the spot. Right-click cancels." />
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Activation &amp; safety" Classes="section" />
+                    <Border Classes="card">
+                        <StackPanel>
+                            <ui:SettingRow Header="Start / stop auto-clicker"><ui:HotkeyBox x:Name="HkAcStartStop" /></ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Start / stop activation">
+                                <ComboBox x:Name="CbAcActivation" Width="200" SelectionChanged="AcControl_Changed" />
+                            </ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Safety countdown" Description="Delay after start, so a runaway clicker is easy to catch.">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox x:Name="TxtAcSafetySeconds" Width="64" MaxLength="2" TextChanged="AcControl_Changed" />
+                                    <TextBlock Text="sec" Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Os.TextMuted}" />
+                                    <ToggleSwitch x:Name="ChkAcSafety" Margin="16,0,0,0" IsCheckedChanged="AcControl_Changed" />
+                                </StackPanel>
+                            </ui:SettingRow>
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="callout">
+                        <TextBlock TextWrapping="Wrap" Text="Stops when you press the key again, the game loses focus, or Oversight quits." />
+                    </Border>
+                </StackPanel>
+
+                <!-- ═══════════ Game Profiles ═══════════ -->
+                <StackPanel x:Name="PageGames" Classes="page" IsVisible="False">
+                    <TextBlock Text="Game Profiles" Classes="pageTitle" />
+                    <TextBlock Classes="pageSubtitle" Text="Slots load automatically while each game is focused." />
+
+                    <TextBlock Text="Everywhere else" Classes="section" />
+                    <Border Classes="card" Padding="16,12,16,14">
+                        <StackPanel>
+                            <TextBlock Classes="caption" Margin="0,0,0,10" Text="Used outside your listed games." />
+                            <Grid ColumnDefinitions="*,12,*,12,*">
+                                <StackPanel>
+                                    <TextBlock Text="ZOOM" Classes="overline" Margin="2,0,0,6" />
+                                    <ComboBox x:Name="CbDefaultZoom" HorizontalAlignment="Stretch" SelectionChanged="CbDefault_Changed" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="CROSSHAIR" Classes="overline" Margin="2,0,0,6" />
+                                    <ComboBox x:Name="CbDefaultXh" HorizontalAlignment="Stretch" SelectionChanged="CbDefault_Changed" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="AUTO CLICKER" Classes="overline" Margin="2,0,0,6" />
+                                    <ComboBox x:Name="CbDefaultAc" HorizontalAlignment="Stretch" SelectionChanged="CbDefault_Changed" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <DockPanel Margin="0,20,0,8">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
+                            <Button Content="Remove" Classes="danger" Click="RemoveRule_Click" ToolTip.Tip="Remove the selected game" />
+                            <Button Content="Add running app…" Classes="accent" Click="AddRunningApp_Click" />
+                        </StackPanel>
+                        <TextBlock Text="Per-game profiles" Classes="section" Margin="2,0,0,0" VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <Border Classes="card" Padding="10">
+                        <DockPanel>
+                            <Grid DockPanel.Dock="Top" ColumnDefinitions="34,*,140,10,140,10,140" Margin="12,4,12,8">
+                                <TextBlock Grid.ColumnSpan="2" Text="GAME" Classes="overline" />
+                                <TextBlock Grid.Column="2" Text="ZOOM" Classes="overline" />
+                                <TextBlock Grid.Column="4" Text="CROSSHAIR" Classes="overline" />
+                                <TextBlock Grid.Column="6" Text="AUTO CLICKER" Classes="overline" />
+                            </Grid>
+                            <Panel MinHeight="160">
+                                <TextBlock x:Name="TxtNoRules" Classes="caption" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Text="No games yet. Start one, then click “Add running app…”." />
+                                <ListBox x:Name="LbRules" Background="Transparent">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="ui:AppRuleRow">
+                                            <Grid ColumnDefinitions="34,*,140,10,140,10,140">
+                                                <Border Width="34" Height="34" CornerRadius="6" Background="{DynamicResource Os.AccentSoft}"
+                                                        BorderBrush="{DynamicResource Os.AccentSoftStrong}" BorderThickness="1">
+                                                    <TextBlock Text="{Binding Initial}" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource Os.AccentText}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" FontWeight="Medium" />
+                                                    <TextBlock Text="{Binding ProcessName}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <ComboBox Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                                                          ItemsSource="{Binding ZoomChoices}" SelectedItem="{Binding SelectedZoom, Mode=TwoWay}" />
+                                                <ComboBox Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                                                          ItemsSource="{Binding CrosshairChoices}" SelectedItem="{Binding SelectedCrosshair, Mode=TwoWay}" />
+                                                <ComboBox Grid.Column="6" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                                                          ItemsSource="{Binding AutoClickerChoices}" SelectedItem="{Binding SelectedAutoClicker, Mode=TwoWay}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Panel>
+                        </DockPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ═══════════ General ═══════════ -->
+                <StackPanel x:Name="PageGeneral" Classes="page" IsVisible="False">
+                    <TextBlock Text="General" Classes="pageTitle" />
+                    <Border x:Name="X11Note" Classes="callout" IsVisible="False">
+                        <TextBlock x:Name="TxtX11Note" TextWrapping="Wrap" />
+                    </Border>
+
+                    <TextBlock Text="App" Classes="section" />
+                    <Border Classes="card">
+                        <StackPanel>
+                            <ui:SettingRow Header="Open Oversight settings"><ui:HotkeyBox x:Name="HkOpenSettings" /></ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Run Oversight when you log in">
+                                <ToggleSwitch x:Name="ChkStartup" IsCheckedChanged="Startup_Changed" />
+                            </ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Warn about hotkey conflicts" Description="At most once every 30 minutes.">
+                                <ToggleSwitch x:Name="ChkHotkeyWarnings" IsCheckedChanged="HotkeyWarnings_Changed" />
+                            </ui:SettingRow>
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="callout">
+                        <TextBlock TextWrapping="Wrap" Text="Escape clears a key box." />
+                    </Border>
+
+                    <TextBlock Text="Updates" Classes="section" />
+                    <Border Classes="card">
+                        <StackPanel>
+                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="16,8" MinHeight="40">
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
+                                    <TextBlock x:Name="TxtUpdateTitle" />
+                                    <TextBlock x:Name="TxtUpdateStatus" Classes="caption" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <Button x:Name="BtnUpdateNotes" Grid.Column="1" Content="What's new" Margin="0,0,8,0" VerticalAlignment="Center" Click="UpdateNotes_Click" />
+                                <Button x:Name="BtnUpdate" Grid.Column="2" Content="Check for updates" MinWidth="120" VerticalAlignment="Center" Click="Update_Click" />
+                            </Grid>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Check for updates automatically" Description="Once a day, from GitHub releases.">
+                                <ToggleSwitch x:Name="ChkCheckUpdates" IsCheckedChanged="UpdatePrefs_Changed" />
+                            </ui:SettingRow>
+                            <Border Classes="divider" />
+                            <ui:SettingRow Header="Install updates automatically" Description="Verifies the download and restarts in the tray.">
+                                <ToggleSwitch x:Name="ChkAutoInstall" IsCheckedChanged="UpdatePrefs_Changed" />
+                            </ui:SettingRow>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="About" Classes="section" />
+                    <Border Classes="card" Padding="16,14">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Image Source="{StaticResource Os.Logo}" Width="48" Height="48" VerticalAlignment="Top" />
+                            <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="Oversight" FontSize="17" FontWeight="SemiBold" />
+                                <TextBlock x:Name="TxtAboutVersion" Margin="0,2,0,0" Foreground="{DynamicResource Os.AccentText}" />
+                                <TextBlock Classes="caption" Margin="0,6,0,0" Text="Screen zoom, crosshair overlay and auto clicker. Use Borderless or Windowed mode in games." />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Panel>
+        </ScrollViewer>
+    </Grid>
+</Window>

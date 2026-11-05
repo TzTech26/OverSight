@@ -1,0 +1,384 @@
+{
+  "Version": 5,
+  "ZoomProfiles": [
+    {
+      "Name": "Default",
+      "Settings": {
+        "Hotkeys": {
+          "ToggleZoom": {
+            "Modifiers": 0,
+            "VirtualKey": 119
+          },
+          "ZoomIn": {
+            "Modifiers": 2,
+            "VirtualKey": 187
+          },
+          "ZoomOut": {
+            "Modifiers": 2,
+            "VirtualKey": 189
+          }
+        },
+        "DefaultZoomLevel": 2,
+        "ZoomStep": 0.25,
+        "MinZoom": 1.25,
+        "MaxZoom": 16,
+        "ToggleZoomMode": "Toggle",
+        "Engine": "Fullscreen",
+        "MonitorMode": "ActiveMonitor",
+        "ZoomInAnimationEnabled": true,
+        "ZoomAnimationMs": 150,
+        "ZoomOutAnimationEnabled": true,
+        "ZoomOutAnimationMs": 150,
+        "SmoothPanEnabled": false,
+        "PanSmoothingMs": 120
+      }
+    },
+    {
+      "Name": "Sniper",
+      "Settings": {
+        "Hotkeys": {
+          "ToggleZoom": {
+            "Modifiers": 0,
+            "VirtualKey": 6
+          },
+          "ZoomIn": {
+            "Modifiers": 2,
+            "VirtualKey": 187
+          },
+          "ZoomOut": {
+            "Modifiers": 2,
+            "VirtualKey": 189
+          }
+        },
+        "DefaultZoomLevel": 4,
+        "ZoomStep": 0.5,
+        "MinZoom": 1.25,
+        "MaxZoom": 16,
+        "ToggleZoomMode": "Hold",
+        "Engine": "Fullscreen",
+        "MonitorMode": "ActiveMonitor",
+        "ZoomInAnimationEnabled": true,
+        "ZoomAnimationMs": 150,
+        "ZoomOutAnimationEnabled": true,
+        "ZoomOutAnimationMs": 150,
+        "SmoothPanEnabled": false,
+        "PanSmoothingMs": 120
+      }
+    }
+  ],
+  "CrosshairProfiles": [
+    {
+      "Name": "Classic cross",
+      "Style": {
+        "Shape": "Cross",
+        "Size": 28,
+        "Thickness": 2,
+        "Gap": 6,
+        "CenterDot": false,
+        "ColorHex": "#00FF40",
+        "Opacity": 90,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    },
+    {
+      "Name": "Fine cross",
+      "Style": {
+        "Shape": "Cross",
+        "Size": 18,
+        "Thickness": 1,
+        "Gap": 3,
+        "CenterDot": false,
+        "ColorHex": "#00E5FF",
+        "Opacity": 100,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    },
+    {
+      "Name": "Heavy cross",
+      "Style": {
+        "Shape": "Cross",
+        "Size": 40,
+        "Thickness": 4,
+        "Gap": 8,
+        "CenterDot": false,
+        "ColorHex": "#FFFFFF",
+        "Opacity": 85,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    },
+    {
+      "Name": "Cross \u002B dot",
+      "Style": {
+        "Shape": "Cross",
+        "Size": 28,
+        "Thickness": 2,
+        "Gap": 8,
+        "CenterDot": true,
+        "ColorHex": "#00FF40",
+        "Opacity": 90,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    },
+    {
+      "Name": "Dot",
+      "Style": {
+        "Shape": "Dot",
+        "Size": 12,
+        "Thickness": 3,
+        "Gap": 0,
+        "CenterDot": false,
+        "ColorHex": "#FF3030",
+        "Opacity": 100,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    },
+    {
+      "Name": "Small dot",
+      "Style": {
+        "Shape": "Dot",
+        "Size": 8,
+        "Thickness": 2,
+        "Gap": 0,
+        "CenterDot": false,
+        "ColorHex": "#00FF40",
+        "Opacity": 100,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    },
+    {
+      "Name": "Circle",
+      "Style": {
+        "Shape": "Circle",
+        "Size": 30,
+        "Thickness": 2,
+        "Gap": 0,
+        "CenterDot": false,
+        "ColorHex": "#FFEB3B",
+        "Opacity": 85,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    },
+    {
+      "Name": "Circle \u002B dot",
+      "Style": {
+        "Shape": "CircleDot",
+        "Size": 32,
+        "Thickness": 2,
+        "Gap": 0,
+        "CenterDot": false,
+        "ColorHex": "#FF3030",
+        "Opacity": 90,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    },
+    {
+      "Name": "Scope (circle \u002B cross)",
+      "Style": {
+        "Shape": "CircleCross",
+        "Size": 48,
+        "Thickness": 2,
+        "Gap": 8,
+        "CenterDot": false,
+        "ColorHex": "#00FF40",
+        "Opacity": 85,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    },
+    {
+      "Name": "X cross",
+      "Style": {
+        "Shape": "XCross",
+        "Size": 28,
+        "Thickness": 2,
+        "Gap": 6,
+        "CenterDot": false,
+        "ColorHex": "#FF00FF",
+        "Opacity": 90,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    },
+    {
+      "Name": "T cross",
+      "Style": {
+        "Shape": "TCross",
+        "Size": 28,
+        "Thickness": 2,
+        "Gap": 6,
+        "CenterDot": false,
+        "ColorHex": "#00FF40",
+        "Opacity": 90,
+        "Outline": true
+      },
+      "ToggleHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 88
+      },
+      "HoldHideHotkey": {
+        "Modifiers": 0,
+        "VirtualKey": 0
+      }
+    }
+  ],
+  "AutoClickerProfiles": [
+    {
+      "Name": "Default",
+      "Settings": {
+        "ActionKey": {
+          "Modifiers": 0,
+          "VirtualKey": 1
+        },
+        "Activation": "Toggle",
+        "IntervalMs": 100,
+        "JitterEnabled": false,
+        "JitterMs": 0,
+        "AdaptiveLimit": true,
+        "ClickType": "Single",
+        "RepeatMode": "UntilStopped",
+        "RepeatSeconds": 30,
+        "RepeatCount": 100,
+        "UseFixedPosition": false,
+        "FixedX": 0,
+        "FixedY": 0,
+        "SafetyCountdownEnabled": false,
+        "SafetyCountdownSeconds": 3
+      },
+      "StartStopHotkey": {
+        "Modifiers": 3,
+        "VirtualKey": 67
+      }
+    },
+    {
+      "Name": "Farm",
+      "Settings": {
+        "ActionKey": {
+          "Modifiers": 0,
+          "VirtualKey": 1
+        },
+        "Activation": "Toggle",
+        "IntervalMs": 250,
+        "JitterEnabled": false,
+        "JitterMs": 0,
+        "AdaptiveLimit": true,
+        "ClickType": "Single",
+        "RepeatMode": "ForCount",
+        "RepeatSeconds": 30,
+        "RepeatCount": 50,
+        "UseFixedPosition": true,
+        "FixedX": 640,
+        "FixedY": 360,
+        "SafetyCountdownEnabled": false,
+        "SafetyCountdownSeconds": 3
+      },
+      "StartStopHotkey": {
+        "Modifiers": 4,
+        "VirtualKey": 117
+      }
+    }
+  ],
+  "ActiveZoomProfile": "Default",
+  "ActiveCrosshairProfile": "Classic cross",
+  "ActiveAutoClickerProfile": "Default",
+  "AppRules": [
+    {
+      "ProcessName": "eldenring",
+      "DisplayName": "ELDEN RING",
+      "ZoomProfile": "Sniper",
+      "CrosshairProfile": "Dot",
+      "AutoClickerProfile": "Farm",
+      "DisplayLabel": "ELDEN RING"
+    }
+  ],
+  "DefaultZoomProfile": "Default",
+  "DefaultCrosshairProfile": "Classic cross",
+  "DefaultAutoClickerProfile": null,
+  "OpenSettingsHotkey": {
+    "Modifiers": 3,
+    "VirtualKey": 90
+  },
+  "Updates": {
+    "CheckForUpdates": true,
+    "InstallAutomatically": false,
+    "LastCheck": "2026-11-01T12:00:00"
+  },
+  "ShowHotkeyWarnings": false
+}

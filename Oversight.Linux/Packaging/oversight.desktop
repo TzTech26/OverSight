@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Oversight
+GenericName=Gaming overlay toolkit
+Comment=Screen zoom, crosshair overlay and auto clicker
+Exec=oversight
+Icon=oversight
+Terminal=false
+Categories=Game;Utility;
+Keywords=zoom;magnifier;crosshair;auto clicker;
+StartupWMClass=oversight
