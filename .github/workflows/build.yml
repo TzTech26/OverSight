@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, linux]
     tags: ["v*"]
   pull_request:
 
@@ -106,24 +106,64 @@ jobs:
           name: Oversight-win-x64
           path: Oversight-win-x64.zip
 
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: linux-x64
+            runner: ubuntu-latest
+          - rid: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Version
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then echo "VERSION_ARG=-p:Version=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"; fi
+
+      - name: Build AppImage
+        run: |
+          sudo apt-get update -q && sudo apt-get install -yq file
+          bash tools/build-appimage.sh ${{ matrix.rid }} $VERSION_ARG
+
+      # Hotkeys, the crosshair overlay, an XTest click, the focused app and settings.json, on a virtual X display with a window manager.
+      - name: Self-test under Xvfb
+        run: |
+          sudo apt-get install -yq xvfb openbox libxtst6 libxi6 fonts-dejavu-core
+          chmod +x Oversight-${{ matrix.rid }}.AppImage
+          xvfb-run -a -s "-screen 0 1280x800x24" sh -c 'openbox & sleep 2; APPIMAGE_EXTRACT_AND_RUN=1 ./Oversight-${{ matrix.rid }}.AppImage --self-test'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Oversight-${{ matrix.rid }}
+          path: Oversight-${{ matrix.rid }}.AppImage
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: sign
+    needs: [sign, linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: Oversight-win-x64
+          pattern: Oversight-*
+          merge-multiple: true
 
       # The in-app updater refuses to install a download whose hash isn't listed here.
       - name: Checksums
-        run: sha256sum Oversight-win-x64.zip > SHA256SUMS.txt
+        run: sha256sum Oversight-win-x64.zip Oversight-linux-*.AppImage > SHA256SUMS.txt
 
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             Oversight-win-x64.zip
+            Oversight-linux-*.AppImage
             SHA256SUMS.txt
           # The code signing policy has to be mentioned where people download signed builds.
-          body: "${{ needs.sign.outputs.signed == 'true' && 'Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).' || '' }}"
+          body: "${{ needs.sign.outputs.signed == 'true' && 'Windows build: free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).' || '' }}"
           generate_release_notes: true
