@@ -164,7 +164,8 @@ public sealed class AutoClickerService : IDisposable
                     break;
 
                 // The process watcher is paused while Settings is open, so check focus here too.
-                if (ForegroundPid() != targetPid)
+                // pid 0 = no foreground window for a moment during a focus change; not a reason to stop.
+                if (ForegroundPid() is var fg && fg != 0 && fg != targetPid)
                     break;
 
                 // Adaptive limiter: a few times per frame, check that the foreground window is
