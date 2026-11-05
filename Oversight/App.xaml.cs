@@ -20,6 +20,9 @@ public partial class App : Application
     private Updater?            _updater;
     private DispatcherTimer?    _updateTimer;
     private static System.Threading.Mutex? _instanceLock;
+    private EventWaitHandle?    _showSignal;
+    private DateTime            _lastConflictWarning = DateTime.MinValue;
+    private static readonly string ShowEventName = "OverSight_ShowSettings" + AppProfile.Suffix;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -60,8 +63,13 @@ public partial class App : Application
         _instanceLock = new System.Threading.Mutex(true, "OverSight_SingleInstance" + AppProfile.Suffix, out bool isNew);
         if (!isNew)
         {
-            MessageBox.Show("Oversight is already running.", "Oversight",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            // Launching again opens the running copy's settings (copies older than 2.3.2 don't listen for this).
+            try { EventWaitHandle.OpenExisting(ShowEventName).Set(); }
+            catch (WaitHandleCannotBeOpenedException)
+            {
+                MessageBox.Show("Oversight is already running. Click its tray icon to open it.", "Oversight",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
             Shutdown();
             return;
         }
@@ -93,8 +101,13 @@ public partial class App : Application
         _tray        = new TrayManager(_config, _hotkeys, _magnifier, _watcher, _crosshair, _autoClicker, _updater);
 
         // Wire up hotkey conflict notifications → tray balloon
-        _hotkeys.HotkeyConflict += msg =>
-            Dispatcher.BeginInvoke(() => _tray?.ShowBalloon("Hotkey conflict", msg));
+        // At most one conflict warning every 30 minutes, and none when they're turned off in Settings > General.
+        _hotkeys.HotkeyConflict += msg => Dispatcher.BeginInvoke(() =>
+        {
+            if (_config?.ShowHotkeyWarnings != true || DateTime.Now - _lastConflictWarning < TimeSpan.FromMinutes(30)) return;
+            _lastConflictWarning = DateTime.Now;
+            _tray?.ShowBalloon("Hotkey conflict", msg + " Click to change it or turn these warnings off.");
+        });
 
         // "Show/hide crosshair" hotkey
         _hotkeys.ToggleCrosshairRequested += () => _crosshair?.ToggleHidden();
@@ -107,6 +120,9 @@ public partial class App : Application
         _hotkeys.HoldAutoClickerRequested   += vk => _autoClicker?.BeginHoldRun(vk);
 
         _tray.Show();
+
+        _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
+        new Thread(() => { while (_showSignal.WaitOne()) Dispatcher.BeginInvoke(() => _tray?.OpenSettings()); }) { IsBackground = true }.Start();
 
         // An isolated profile (OVERSIGHT_PROFILE, used for UI development) must not grab the
         // global hotkeys or drive slot switching — a normal install may be running beside it.

@@ -14,7 +14,8 @@ public class ZoomSettings
 
     public Dictionary<string, HotkeyBinding> Hotkeys { get; set; } = new()
     {
-        ["ToggleZoom"] = new HotkeyBinding { Modifiers = 0,                        VirtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.F12) },
+        // Not F12: Windows reserves it for debuggers, so registering it fails on many PCs.
+        ["ToggleZoom"] = new HotkeyBinding { Modifiers = 0,                        VirtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.F8) },
         ["ZoomIn"]     = new HotkeyBinding { Modifiers = NativeMethods.MOD_CONTROL, VirtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.OemPlus) },
         ["ZoomOut"]    = new HotkeyBinding { Modifiers = NativeMethods.MOD_CONTROL, VirtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.OemMinus) },
     };

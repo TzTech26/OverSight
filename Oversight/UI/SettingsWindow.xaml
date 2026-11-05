@@ -1261,6 +1261,21 @@
                                                   AutomationProperties.Name="Run Oversight when Windows starts"
                                                   Checked="Startup_Changed" Unchecked="Startup_Changed"/>
                                     </Grid>
+                                    <Border Style="{StaticResource RowDivider}"/>
+                                    <Grid Style="{StaticResource SettingRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
+                                            <TextBlock Text="Warn about hotkey conflicts" Style="{StaticResource RowTitle}"/>
+                                            <TextBlock Style="{StaticResource RowDesc}"
+                                                       Text="Notifies you when another app already uses one of your keys. At most once every 30 minutes."/>
+                                        </StackPanel>
+                                        <CheckBox x:Name="ChkHotkeyWarnings" Grid.Column="1" VerticalAlignment="Center"
+                                                  AutomationProperties.Name="Warn about hotkey conflicts"
+                                                  Checked="HotkeyWarnings_Changed" Unchecked="HotkeyWarnings_Changed"/>
+                                    </Grid>
                                 </StackPanel>
                             </Border>
 

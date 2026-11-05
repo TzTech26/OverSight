@@ -76,6 +76,9 @@ public sealed class ConfigStore
     /// <summary>Update preferences; edit in place, then <see cref="Save"/>.</summary>
     public UpdateSettings Updates { get; private set; } = new();
 
+    /// <summary>Whether to notify about hotkeys another app already uses (rate-limited by the app).</summary>
+    public bool ShowHotkeyWarnings { get; set; } = true;
+
     /// <summary>Raised when slots are added/removed/renamed or an active slot changes.</summary>
     public event Action? ProfilesChanged;
 
@@ -153,6 +156,7 @@ public sealed class ConfigStore
             ActiveAutoClickerProfileName = file.ActiveAutoClickerProfile;
             _openSettingsHotkey       = file.OpenSettingsHotkey ?? DefaultOpenSettingsHotkey();
             Updates                   = file.Updates ?? new();
+            ShowHotkeyWarnings        = file.ShowHotkeyWarnings;
         }
         else
         {
@@ -283,6 +287,9 @@ public sealed class ConfigStore
             if (string.IsNullOrWhiteSpace(p.Name) || !seenZoom.Add(p.Name))
                 p.Name = MakeUnique(string.IsNullOrWhiteSpace(p.Name) ? DefaultZoomName : p.Name, seenZoom);
             Normalize(p.Settings);
+            // The old default (bare F12) can't be registered on many PCs; move it to the new default.
+            if (p.Settings.Hotkeys.TryGetValue("ToggleZoom", out var tz) && tz is { Modifiers: 0, VirtualKey: 0x7B })
+                p.Settings.Hotkeys["ToggleZoom"] = new ZoomSettings().Hotkeys["ToggleZoom"];
         }
 
         var seenXh = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -375,6 +382,7 @@ public sealed class ConfigStore
                 DefaultAutoClickerProfile = DefaultAutoClickerProfile,
                 OpenSettingsHotkey        = _openSettingsHotkey,
                 Updates                   = Updates,
+                ShowHotkeyWarnings        = ShowHotkeyWarnings,
             };
             File.WriteAllText(ConfigPath, JsonSerializer.Serialize(file, JsonOpts));
         }

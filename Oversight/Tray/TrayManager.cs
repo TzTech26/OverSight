@@ -52,6 +52,7 @@ public sealed class TrayManager : IDisposable
         };
 
         _tray.Click += (_, _) => ShowSettings();
+        _tray.BalloonTipClicked += (_, _) => ShowSettings();
         _tray.ContextMenuStrip = BuildMenu();
 
         _magnifier.StateChanged += OnMagnifierStateChanged;

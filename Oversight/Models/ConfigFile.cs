@@ -45,6 +45,9 @@ public class ConfigFile
 
     /// <summary>App-wide update preferences (General page).</summary>
     public UpdateSettings Updates { get; set; } = new();
+
+    /// <summary>Notify when another app already uses one of the hotkeys.</summary>
+    public bool ShowHotkeyWarnings { get; set; } = true;
 }
 
 public class UpdateSettings

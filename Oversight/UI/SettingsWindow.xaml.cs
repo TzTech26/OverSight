@@ -167,6 +167,7 @@ public partial class SettingsWindow : Window
         try { ChkStartup.IsChecked = StartupManager.IsEnabled; }
         catch { ChkStartup.IsEnabled = false; }
         HkOpenSettings.BindingValue = Clone(_config.OpenSettingsHotkey);
+        ChkHotkeyWarnings.IsChecked = _config.ShowHotkeyWarnings;
         ChkCheckUpdates.IsChecked = _config.Updates.CheckForUpdates;
         ChkAutoInstall.IsChecked  = _config.Updates.InstallAutomatically;
         ChkAutoInstall.IsEnabled  = _config.Updates.CheckForUpdates;
@@ -1173,6 +1174,13 @@ public partial class SettingsWindow : Window
             MessageBox.Show($"Could not update startup entry:\n{ex.Message}",
                 "Oversight", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    private void HotkeyWarnings_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        _config.ShowHotkeyWarnings = ChkHotkeyWarnings.IsChecked == true;
+        _config.Save();
     }
 
     // ── Updates (app-wide, applied right away) ──

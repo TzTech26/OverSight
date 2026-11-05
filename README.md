@@ -94,7 +94,7 @@ the app icon.
 
 | Action | Default |
 |---|---|
-| Toggle zoom on/off | **F12** |
+| Toggle zoom on/off | **F8** |
 | Zoom in | **Ctrl + =** |
 | Zoom out | **Ctrl + −** |
 | Show / hide crosshair | **Ctrl + Alt + X** |
@@ -108,9 +108,9 @@ Each feature's keybinds are on its own page (Zoom, Crosshair, Auto Clicker) and 
 ## Usage
 
 1. **Launch** — A magnifier icon appears in the system tray.
-2. **Press F12** — The entire screen magnifies 2× around your cursor.
+2. **Press F8** — The entire screen magnifies 2× around your cursor.
 3. **Scroll wheel** — Increase or decrease zoom while active.
-4. **Press F12 again** — Exits zoom.
+4. **Press F8 again** — Exits zoom.
 5. **Tray icon** → **Settings** — Configure everything.
 
 ### Per-game setup
