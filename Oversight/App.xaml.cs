@@ -52,7 +52,8 @@ public partial class App : Application
                 using var old = System.Diagnostics.Process.GetProcessById(pid);
                 Updater.Log($"{Updater.CurrentVersion}: waiting for {old.ProcessName} ({pid}) to exit.");
                 // An old copy that didn't quit would hold the hotkeys and the tray, so close it.
-                if (old.ProcessName == "Oversight" && !old.WaitForExit(15000))   // name check guards against a reused pid
+                // Name check guards against a reused pid; a renamed old exe reports as "Oversight.exe.old".
+                if (old.ProcessName.StartsWith("Oversight", StringComparison.OrdinalIgnoreCase) && !old.WaitForExit(15000))
                 {
                     Updater.Log($"{Updater.CurrentVersion}: old copy still running after 15 s, closing it.");
                     old.Kill();
