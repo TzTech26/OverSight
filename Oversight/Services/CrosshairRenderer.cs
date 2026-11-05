@@ -37,21 +37,23 @@ internal static class CrosshairRenderer
         // pass yields a crisp 1px ring instead of a fat halo.
         float dotD = Math.Max(3, th * 3);
 
-        // Outline pass: the same shape, slightly thicker, in black underneath.
+        // Outline pass: the same shape grown by 1px on every edge, in black underneath.
         if (s.Outline)
-            DrawShape(g, s, c, size, th + 2, gap, dotD + 2, Color.FromArgb(alpha, 0, 0, 0));
-        DrawShape(g, s, c, size, th, gap, dotD, color);
+            DrawShape(g, s, c, size, th, gap, dotD, Color.FromArgb(alpha, 0, 0, 0), 1);
+        DrawShape(g, s, c, size, th, gap, dotD, color, 0);
 
         return bmp;
     }
 
+    /// <summary>Draws the shape from the style geometry, grown by <paramref name="grow"/> px on every edge.</summary>
     private static void DrawShape(Graphics g, CrosshairSettings s, float c,
-                                  int size, int thickness, int gap, float dotD, Color color)
+                                  int size, int th, int gap, float dotD, Color color, int grow)
     {
         float half = size / 2f;
         float g0   = Math.Min(gap / 2f, half);   // arm inner end (gap half-width)
+        dotD += 2 * grow;
 
-        using var pen   = new Pen(color, thickness) { StartCap = LineCap.Flat, EndCap = LineCap.Flat };
+        using var pen   = new Pen(color, th + 2 * grow) { StartCap = LineCap.Flat, EndCap = LineCap.Flat };
         using var brush = new SolidBrush(color);
 
         // Whether this shape already includes a dot of its own (the Centre-dot option is
@@ -61,52 +63,51 @@ internal static class CrosshairRenderer
         switch (s.Shape)
         {
             case CrosshairShape.Cross:
-                DrawArm(g, pen, c, c, 0, -1, g0, half);
-                DrawArm(g, pen, c, c, 0, +1, g0, half);
-                DrawArm(g, pen, c, c, -1, 0, g0, half);
-                DrawArm(g, pen, c, c, +1, 0, g0, half);
+                DrawArm(g, pen, c, c, 0, -1, g0, half, grow);
+                DrawArm(g, pen, c, c, 0, +1, g0, half, grow);
+                DrawArm(g, pen, c, c, -1, 0, g0, half, grow);
+                DrawArm(g, pen, c, c, +1, 0, g0, half, grow);
                 break;
 
             case CrosshairShape.XCross:
             {
                 const float d = 0.70710678f;   // cos 45°
-                DrawArm(g, pen, c, c, -d, -d, g0, half);
-                DrawArm(g, pen, c, c, +d, -d, g0, half);
-                DrawArm(g, pen, c, c, -d, +d, g0, half);
-                DrawArm(g, pen, c, c, +d, +d, g0, half);
+                DrawArm(g, pen, c, c, -d, -d, g0, half, grow);
+                DrawArm(g, pen, c, c, +d, -d, g0, half, grow);
+                DrawArm(g, pen, c, c, -d, +d, g0, half, grow);
+                DrawArm(g, pen, c, c, +d, +d, g0, half, grow);
                 break;
             }
 
             case CrosshairShape.TCross:
-                DrawArm(g, pen, c, c, 0, +1, g0, half);
-                DrawArm(g, pen, c, c, -1, 0, g0, half);
-                DrawArm(g, pen, c, c, +1, 0, g0, half);
+                DrawArm(g, pen, c, c, 0, +1, g0, half, grow);
+                DrawArm(g, pen, c, c, -1, 0, g0, half, grow);
+                DrawArm(g, pen, c, c, +1, 0, g0, half, grow);
                 break;
 
             case CrosshairShape.Dot:
             {
-                float d = Math.Max(3, size / 2f + thickness - 2);   // Size drives the lone dot
+                float d = Math.Max(3, size / 2f + th - 2) + 2 * grow;   // Size drives the lone dot
                 g.FillEllipse(brush, c - d / 2, c - d / 2, d, d);
                 break;
             }
 
             case CrosshairShape.Circle:
-                // Style thickness, not pass thickness: the outline ring must share the colour ring's radius.
-                DrawRing(g, pen, c, size - Math.Clamp(s.Thickness, 1, 16));
+                DrawRing(g, pen, c, size - th);
                 break;
 
             case CrosshairShape.CircleDot:
-                DrawRing(g, pen, c, size - thickness);
+                DrawRing(g, pen, c, size - th);
                 g.FillEllipse(brush, c - dotD / 2, c - dotD / 2, dotD, dotD);
                 break;
 
             case CrosshairShape.CircleCross:
                 // Scope style: smaller ring, arms run from the gap out to the full size.
                 DrawRing(g, pen, c, size * 2f / 3f);
-                DrawArm(g, pen, c, c, 0, -1, g0, half);
-                DrawArm(g, pen, c, c, 0, +1, g0, half);
-                DrawArm(g, pen, c, c, -1, 0, g0, half);
-                DrawArm(g, pen, c, c, +1, 0, g0, half);
+                DrawArm(g, pen, c, c, 0, -1, g0, half, grow);
+                DrawArm(g, pen, c, c, 0, +1, g0, half, grow);
+                DrawArm(g, pen, c, c, -1, 0, g0, half, grow);
+                DrawArm(g, pen, c, c, +1, 0, g0, half, grow);
                 break;
         }
 
@@ -115,11 +116,13 @@ internal static class CrosshairRenderer
             g.FillEllipse(brush, c - dotD / 2, c - dotD / 2, dotD, dotD);
     }
 
-    /// <summary>Draws one arm from (cx,cy) + dir·inner to (cx,cy) + dir·outer.</summary>
+    /// <summary>Draws one arm from (cx,cy) + dir·inner to (cx,cy) + dir·outer, extended by grow at both ends.</summary>
     private static void DrawArm(Graphics g, Pen pen, float cx, float cy,
-                                float dx, float dy, float inner, float outer)
+                                float dx, float dy, float inner, float outer, int grow)
     {
         if (outer - inner < 1f) return;   // gap swallowed the whole arm
+        inner -= grow;
+        outer += grow;
         g.DrawLine(pen, cx + dx * inner, cy + dy * inner, cx + dx * outer, cy + dy * outer);
     }
 

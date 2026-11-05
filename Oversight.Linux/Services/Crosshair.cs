@@ -28,17 +28,19 @@ public static class CrosshairRenderer
 
         using (dc.PushTransform(Matrix.CreateScale(1 / scale, 1 / scale) * Matrix.CreateTranslation(center.X, center.Y)))
         {
-            // Outline pass: the same shape, slightly thicker, in black underneath.
-            if (s.Outline) DrawShape(dc, s, size, th + 2, gap, dotD + 2, Color.FromArgb(alpha, 0, 0, 0));
-            DrawShape(dc, s, size, th, gap, dotD, ParseColor(s.ColorHex, alpha));
+            // Outline pass: the same shape grown by 1px on every edge, in black underneath.
+            if (s.Outline) DrawShape(dc, s, size, th, gap, dotD, Color.FromArgb(alpha, 0, 0, 0), 1);
+            DrawShape(dc, s, size, th, gap, dotD, ParseColor(s.ColorHex, alpha), 0);
         }
     }
 
-    private static void DrawShape(DrawingContext dc, CrosshairSettings s, int size, int thickness, int gap, float dotD, Color color)
+    /// <summary>Draws the shape from the style geometry, grown by <paramref name="grow"/> px on every edge.</summary>
+    private static void DrawShape(DrawingContext dc, CrosshairSettings s, int size, int th, int gap, float dotD, Color color, int grow)
     {
         float half = size / 2f;
         float g0 = Math.Min(gap / 2f, half);
-        var pen = new Pen(new SolidColorBrush(color), thickness, lineCap: PenLineCap.Flat);
+        dotD += 2 * grow;
+        var pen = new Pen(new SolidColorBrush(color), th + 2 * grow, lineCap: PenLineCap.Flat);
         var brush = new SolidColorBrush(color);
         bool hasOwnDot = s.Shape is CrosshairShape.Dot or CrosshairShape.CircleDot;
         const float d = 0.70710678f;
@@ -46,36 +48,38 @@ public static class CrosshairRenderer
         switch (s.Shape)
         {
             case CrosshairShape.Cross:
-                Arms(dc, pen, g0, half, (0, -1), (0, 1), (-1, 0), (1, 0));
+                Arms(dc, pen, g0, half, grow, (0, -1), (0, 1), (-1, 0), (1, 0));
                 break;
             case CrosshairShape.XCross:
-                Arms(dc, pen, g0, half, (-d, -d), (d, -d), (-d, d), (d, d));
+                Arms(dc, pen, g0, half, grow, (-d, -d), (d, -d), (-d, d), (d, d));
                 break;
             case CrosshairShape.TCross:
-                Arms(dc, pen, g0, half, (0, 1), (-1, 0), (1, 0));
+                Arms(dc, pen, g0, half, grow, (0, 1), (-1, 0), (1, 0));
                 break;
             case CrosshairShape.Dot:
-                Dot(dc, brush, Math.Max(3, size / 2f + thickness - 2));   // Size drives the lone dot
+                Dot(dc, brush, Math.Max(3, size / 2f + th - 2) + 2 * grow);   // Size drives the lone dot
                 break;
             case CrosshairShape.Circle:
-                // Style thickness, not pass thickness: the outline ring must share the colour ring's radius.
-                Ring(dc, pen, size - Math.Clamp(s.Thickness, 1, 16));
+                Ring(dc, pen, size - th);
                 break;
             case CrosshairShape.CircleDot:
-                Ring(dc, pen, size - thickness);
+                Ring(dc, pen, size - th);
                 Dot(dc, brush, dotD);
                 break;
             case CrosshairShape.CircleCross:
                 Ring(dc, pen, size * 2f / 3f);
-                Arms(dc, pen, g0, half, (0, -1), (0, 1), (-1, 0), (1, 0));
+                Arms(dc, pen, g0, half, grow, (0, -1), (0, 1), (-1, 0), (1, 0));
                 break;
         }
         if (s.CenterDot && !hasOwnDot) Dot(dc, brush, dotD);
     }
 
-    private static void Arms(DrawingContext dc, IPen pen, float inner, float outer, params (float X, float Y)[] dirs)
+    /// <summary>Draws each arm from dir·inner to dir·outer, extended by grow at both ends.</summary>
+    private static void Arms(DrawingContext dc, IPen pen, float inner, float outer, int grow, params (float X, float Y)[] dirs)
     {
         if (outer - inner < 1f) return;   // gap swallowed the whole arm
+        inner -= grow;
+        outer += grow;
         foreach (var (x, y) in dirs) dc.DrawLine(pen, new Point(x * inner, y * inner), new Point(x * outer, y * outer));
     }
 
