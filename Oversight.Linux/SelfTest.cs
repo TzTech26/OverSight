@@ -65,7 +65,7 @@ public static class SelfTest
     private static async Task Hotkey(nint d)
     {
         var settings = new AppSettings();
-        settings.Hotkeys["OpenSettings"] = new HotkeyBinding { Modifiers = VirtualKeys.MOD_CONTROL | VirtualKeys.MOD_ALT, VirtualKey = 0x7A };   // Ctrl+Alt+F11
+        settings.Hotkeys["OpenSettings"] = new HotkeyBinding { Modifiers = VirtualKeys.MOD_CONTROL | VirtualKeys.MOD_ALT, VirtualKey = 0x4F };   // Ctrl+Alt+O (Ctrl+Alt+F-keys switch VTs in XKB and never reach clients)
         using var hotkeys = new HotkeyManager(settings, new Magnifier(settings));
         int received = 0;
         string? conflict = null;
@@ -74,7 +74,7 @@ public static class SelfTest
         hotkeys.Start();
         await Task.Delay(700);   // the X thread grabs the keys
 
-        int[] combo = [KeyMap.Keycode(d, 0xA2), KeyMap.Keycode(d, 0xA4), KeyMap.Keycode(d, 0x7A)];
+        int[] combo = [KeyMap.Keycode(d, 0xA2), KeyMap.Keycode(d, 0xA4), KeyMap.Keycode(d, 0x4F)];
         async Task Press()
         {
             foreach (int k in combo) X11.XTestFakeKeyEvent(d, (uint)k, 1, 0);
@@ -92,7 +92,7 @@ public static class SelfTest
         await Press();
         TapNumLock();
         bool ok = plain == 1 && received == 2;
-        Report(ok, "hotkey", ok ? "Ctrl+Alt+F11 grabbed and received, also with NumLock on"
+        Report(ok, "hotkey", ok ? "Ctrl+Alt+O grabbed and received, also with NumLock on"
             : conflict ?? $"received {plain} of 1 presses, {received - plain} of 1 with NumLock on");
     }
 
