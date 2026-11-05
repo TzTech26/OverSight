@@ -93,7 +93,11 @@ public sealed class Updater
         try
         {
             if (await CheckAsync() is not { } update) return;
-            if (s.InstallAutomatically && CanSelfUpdate && await InstallAsync(update) is null) return;
+            if (s.InstallAutomatically && CanSelfUpdate)
+            {
+                if (await InstallAsync(update) is not string error) return;
+                Log($"{CurrentVersion}: couldn't install {update.Version}: {error}");
+            }
             notify(update);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException)
@@ -116,13 +120,24 @@ public sealed class Updater
             Directory.CreateDirectory(work);
             string download = Path.Combine(work, AssetName);
             using (var http = Client())
+            using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct))
             {
-                await File.WriteAllBytesAsync(download, await http.GetByteArrayAsync(update.ZipUrl, ct), ct);
-                string sums = await http.GetStringAsync(update.SumsUrl, ct);
+                // The ~80 MB zip streams to disk; a slow connection gets 10 minutes, not HttpClient's per-request cap.
+                http.Timeout = Timeout.InfiniteTimeSpan;
+                timeout.CancelAfter(TimeSpan.FromMinutes(10));
+                using (var response = await http.GetAsync(update.ZipUrl, HttpCompletionOption.ResponseHeadersRead, timeout.Token))
+                {
+                    response.EnsureSuccessStatusCode();
+                    await using var file = File.Create(download);
+                    await response.Content.CopyToAsync(file, timeout.Token);
+                }
+                string sums = await http.GetStringAsync(update.SumsUrl, timeout.Token);
                 string? expected = sums.Split('\n')
                     .Select(l => l.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries))
                     .FirstOrDefault(p => p.Length == 2 && p[1].TrimStart('*') == AssetName)?[0];
-                string actual = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(download, ct)));
+                string actual;
+                using (var zip = File.OpenRead(download))
+                    actual = Convert.ToHexString(await SHA256.HashDataAsync(zip, timeout.Token));
                 if (expected is null || !actual.Equals(expected, StringComparison.OrdinalIgnoreCase))
                     return "The download didn't match the published checksum, so it wasn't installed.";
             }
@@ -164,7 +179,7 @@ public sealed class Updater
         {
             return $"Oversight can't write to {Path.GetDirectoryName(target)}. Move it to a folder you own or download the update yourself.";
         }
-        catch (Exception ex) when (ex is IOException or HttpRequestException or InvalidDataException or TaskCanceledException)
+        catch (Exception ex) when (ex is IOException or HttpRequestException or InvalidDataException or OperationCanceledException)
         {
             return $"The update failed: {ex.Message}";
         }

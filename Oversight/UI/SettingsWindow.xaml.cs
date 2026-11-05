@@ -135,8 +135,6 @@ public partial class SettingsWindow : Window
         // suspend them for the instant a capture box is recording a new key, otherwise the
         // global hotkey would swallow the keypress. Binding changes mark the right document
         // dirty; the app-wide Open-settings bind applies immediately instead.
-        var dpd = DependencyPropertyDescriptor.FromProperty(
-            HotkeyCaptureBox.BindingValueProperty, typeof(HotkeyCaptureBox));
         foreach (var box in new[] { HkToggle, HkZoomIn, HkZoomOut, HkCrosshair, HkHoldHideCrosshair,
                                     HkAcAction, HkAcStartStop, HkOpenSettings })
         {
@@ -144,12 +142,12 @@ public partial class SettingsWindow : Window
             box.CaptureStopped += _hotkeys.Resume;
         }
         foreach (var box in new[] { HkToggle, HkZoomIn, HkZoomOut })
-            dpd.AddValueChanged(box, (_, _) => MarkZoomDirty());
-        dpd.AddValueChanged(HkCrosshair, (_, _) => MarkXhDirty());
-        dpd.AddValueChanged(HkHoldHideCrosshair, (_, _) => MarkXhDirty());
-        dpd.AddValueChanged(HkAcAction, (_, _) => MarkAcDirty());
-        dpd.AddValueChanged(HkAcStartStop, (_, _) => MarkAcDirty());
-        dpd.AddValueChanged(HkOpenSettings, (_, _) => ApplyOpenSettingsHotkey());
+            box.BindingValueChanged += (_, _) => MarkZoomDirty();
+        HkCrosshair.BindingValueChanged         += (_, _) => MarkXhDirty();
+        HkHoldHideCrosshair.BindingValueChanged += (_, _) => MarkXhDirty();
+        HkAcAction.BindingValueChanged          += (_, _) => { UpdateAcConditionalRows(); MarkAcDirty(); };
+        HkAcStartStop.BindingValueChanged       += (_, _) => MarkAcDirty();
+        HkOpenSettings.BindingValueChanged      += (_, _) => ApplyOpenSettingsHotkey();
     }
 
     // ── Initial load ────────────────────────────────────────────────────────────
@@ -200,7 +198,6 @@ public partial class SettingsWindow : Window
         ZoomDirty = false;
         RefreshZoomCombo();
         BtnDeleteProfile.IsEnabled = _config.ZoomProfileNames.Count > 1;
-        TxtZoomHkNote.Text = $"Saved with “{name}”.";
     }
 
     private void LoadZoomIntoControls(ZoomSettings s)
@@ -306,7 +303,7 @@ public partial class SettingsWindow : Window
         if (dlg.ShowDialog() != true) return;
 
         _config.SaveZoomProfile(dlg.EnteredName, _workingZoom, makeActive: true);
-        LoadZoomProfile(dlg.EnteredName);
+        LoadZoomProfile(StoredName(dlg.EnteredName, _config.ZoomProfileNames));
         RebuildGameProfilesTab();
         ReloadServices();
     }
@@ -316,7 +313,7 @@ public partial class SettingsWindow : Window
         if (!EnsureZoomSavedOrDiscarded()) return;
 
         var name = PromptName("New zoom slot", "Name for the new zoom slot:",
-            SuggestName("Profile", _config.ZoomProfileNames), _config.ZoomProfileExists);
+            SuggestName("Zoom", _config.ZoomProfileNames), _config.ZoomProfileExists);
         if (name is null) return;
 
         _config.CreateZoomProfile(name);
@@ -336,7 +333,6 @@ public partial class SettingsWindow : Window
         _openZoomName = name;
         RefreshZoomCombo();
         RebuildGameProfilesTab();
-        TxtZoomHkNote.Text = $"Saved with “{name}”.";
     }
 
     private void DeleteProfile_Click(object sender, RoutedEventArgs e)
@@ -387,7 +383,6 @@ public partial class SettingsWindow : Window
         XhDirty = false;
         RefreshXhCombo();
         BtnDeleteXh.IsEnabled = _config.CrosshairProfileNames.Count > 1;
-        TxtXhHkNote.Text = $"Saved with “{name}”.";
         UpdateCrosshairPreview();
     }
 
@@ -473,7 +468,7 @@ public partial class SettingsWindow : Window
 
         _config.SaveCrosshairProfile(dlg.EnteredName, _workingXh,
             HkCrosshair.BindingValue ?? new(), HkHoldHideCrosshair.BindingValue ?? new(), makeActive: true);
-        LoadXhProfile(dlg.EnteredName);
+        LoadXhProfile(StoredName(dlg.EnteredName, _config.CrosshairProfileNames));
         RebuildGameProfilesTab();
         ReloadServices();
     }
@@ -503,7 +498,6 @@ public partial class SettingsWindow : Window
         _openXhName = name;
         RefreshXhCombo();
         RebuildGameProfilesTab();
-        TxtXhHkNote.Text = $"Saved with “{name}”.";
     }
 
     private void DeleteXh_Click(object sender, RoutedEventArgs e)
@@ -677,7 +671,6 @@ public partial class SettingsWindow : Window
         AcDirty = false;
         RefreshAcCombo();
         BtnDeleteAc.IsEnabled = _config.AutoClickerProfileNames.Count > 1;
-        TxtAcHkNote.Text = $"Saved with “{name}”.";
     }
 
     private void LoadAcIntoControls(AutoClickerSettings s)
@@ -733,6 +726,14 @@ public partial class SettingsWindow : Window
         s.SafetyCountdownSeconds = ParseIntOr(TxtAcSafetySeconds.Text, s.SafetyCountdownSeconds, 1, 60);
     }
 
+    // Shows the values actually saved, so text a number box couldn't parse doesn't linger after Save.
+    private void ShowCommittedAc()
+    {
+        _loading = true;
+        LoadAcIntoControls(_workingAc);
+        _loading = false;
+    }
+
     private static int ParseIntOr(string? text, int fallback, int min, int max) =>
         int.TryParse((text ?? "").Trim(), out var v) ? Math.Clamp(v, min, max) : fallback;
 
@@ -751,6 +752,12 @@ public partial class SettingsWindow : Window
             RowAcCount.Visibility = mode == RepeatMode.ForCount ? Visibility.Visible : Visibility.Collapsed;
         if (RowAcFixedPos is not null)
             RowAcFixedPos.Visibility = ChkAcFixedPos.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
+        // Click type and the fixed point only apply to mouse buttons.
+        bool mouse = HotkeyBinding.IsMouseButton(HkAcAction?.BindingValue?.VirtualKey ?? 0);
+        if (RowAcClickType is not null) RowAcClickType.IsEnabled = mouse;
+        if (RowAcFixedToggle is not null) RowAcFixedToggle.IsEnabled = mouse;
+        if (RowAcFixedPos is not null) RowAcFixedPos.IsEnabled = mouse;
     }
 
     private void RefreshAcCombo()
@@ -785,6 +792,7 @@ public partial class SettingsWindow : Window
     private bool DoSaveAc()
     {
         CommitAcControls(_workingAc);
+        ShowCommittedAc();
         if (CheckConflicts()) return false;
 
         _config.SaveAutoClickerProfile(_openAcName, _workingAc, HkAcStartStop.BindingValue ?? new(), makeActive: true);
@@ -796,6 +804,7 @@ public partial class SettingsWindow : Window
     private void SaveAsAc_Click(object sender, RoutedEventArgs e)
     {
         CommitAcControls(_workingAc);
+        ShowCommittedAc();
         if (CheckConflicts()) return;
 
         var dlg = new ProfileSaveAsDialog(this, _config.AutoClickerProfileNames,
@@ -803,7 +812,7 @@ public partial class SettingsWindow : Window
         if (dlg.ShowDialog() != true) return;
 
         _config.SaveAutoClickerProfile(dlg.EnteredName, _workingAc, HkAcStartStop.BindingValue ?? new(), makeActive: true);
-        LoadAcProfile(dlg.EnteredName);
+        LoadAcProfile(StoredName(dlg.EnteredName, _config.AutoClickerProfileNames));
         RebuildGameProfilesTab();
         ReloadServices();
     }
@@ -833,7 +842,6 @@ public partial class SettingsWindow : Window
         _openAcName = name;
         RefreshAcCombo();
         RebuildGameProfilesTab();
-        TxtAcHkNote.Text = $"Saved with “{name}”.";
     }
 
     private void DeleteAc_Click(object sender, RoutedEventArgs e)
@@ -1003,6 +1011,10 @@ public partial class SettingsWindow : Window
         base.OnClosing(e);
     }
 
+    // Slot names match case-insensitively; saving over "Default" as "default" keeps the stored spelling.
+    private static string StoredName(string typed, IReadOnlyList<string> names) =>
+        names.FirstOrDefault(n => string.Equals(n, typed, StringComparison.OrdinalIgnoreCase)) ?? typed;
+
     private static string SuggestName(string baseName, IReadOnlyList<string> existing)
     {
         var taken = existing.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -1072,6 +1084,16 @@ public partial class SettingsWindow : Window
         {
             MessageBox.Show(this,
                 "The auto-clicker's repeated key can't be the same as its start/stop key.\n\nPlease change one before saving.",
+                "Oversight — hotkey conflict", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return true;
+        }
+
+        // In Hold mode the whole combo stays down for the run, so every click would carry its modifiers.
+        if (CbAcActivation.SelectedItem is ActivationChoice { Mode: ActivationMode.Hold } &&
+            startStop is { IsEmpty: false, Modifiers: not 0 })
+        {
+            MessageBox.Show(this,
+                "In Hold mode the start/stop key can't use Ctrl, Alt, Shift or Win.\n\nPick a plain key or switch to Toggle.",
                 "Oversight — hotkey conflict", MessageBoxButton.OK, MessageBoxImage.Warning);
             return true;
         }
@@ -1199,6 +1221,7 @@ public partial class SettingsWindow : Window
         var u = _updater.Available;
         TxtUpdateTitle.Text  = u is null ? $"Oversight {Updater.CurrentVersion}" : $"Oversight {u.Version} is available";
         TxtUpdateStatus.Text = status ?? (u is not null ? $"You have {Updater.CurrentVersion}."
+            : AppProfile.IsIsolated ? "Profile copy: doesn't update."
             : !Updater.CanSelfUpdate ? "Development build: updates install only into the released exe."
             : _config.Updates.LastCheck is DateTime t ? $"Up to date. Last checked {(t.Date == DateTime.Today ? t.ToString("t") : t.ToString("MMM d"))}."
             : "Not checked yet.");
@@ -1400,6 +1423,8 @@ public partial class SettingsWindow : Window
 
         /// <summary>Callback fired when the user changes a slot (not during initial population).</summary>
         public Action<AppRuleRow>? RuleChanged;
+
+        public override string ToString() => DisplayName;   // list item accessible name
 
         /// <summary>Sets the initial selections without firing <see cref="RuleChanged"/>.</summary>
         public void SetInitialSelection(string zoom, string crosshair, string autoClicker)

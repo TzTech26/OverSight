@@ -10,9 +10,6 @@
         Style="{StaticResource DialogWindow}">
 
     <StackPanel Margin="24,20,24,20">
-        <TextBlock Text="Save the current settings to a slot." FontSize="14"
-                   Foreground="{DynamicResource TextBrush}" Margin="0,0,0,16" TextWrapping="Wrap"/>
-
         <TextBlock Text="OVERWRITE AN EXISTING SLOT" Style="{StaticResource Overline}" Margin="2,0,0,6"/>
         <ListBox x:Name="LbProfiles" Height="148" Background="{DynamicResource SurfaceBrush}"
                  SelectionChanged="LbProfiles_SelectionChanged"

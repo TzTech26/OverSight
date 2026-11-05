@@ -567,11 +567,12 @@ public sealed class MagnifierService : IDisposable
 
     private void AdjustZoom(float delta)
     {
-        // A manual zoom / scroll cancels any in-progress ramp (intro or outro) and keeps
-        // the lens up at the new level.
+        // Scrolling during the zoom-out ramp would cancel it and leave the lens stuck on (hold mode).
+        if (_deactivating) return;
+
+        // A manual zoom / scroll cancels an in-progress intro ramp and keeps the lens up at the new level.
         _animating          = false;
         _animEndsDeactivate = false;
-        _deactivating       = false;
         _zoom = Math.Clamp(_zoom + delta, _settings.Zoom.MinZoom, _settings.Zoom.MaxZoom);
         if (_isActive)
         {

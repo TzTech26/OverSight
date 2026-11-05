@@ -134,7 +134,7 @@ an app and press its start/stop key while that app is focused.
    and **stop after** (until stopped / a duration / a click count). Optionally enable
    **random jitter**, a **fixed screen point**, and a **safety countdown**.
 3. Choose **Toggle** (press to start / stop) or **Hold** (clicks only while held).
-4. Set the **Start / stop auto-clicker** key on the **Hotkeys** tab (saved with the slot).
+4. Set the **Start / stop auto-clicker** key under **Activation & safety** on the same page (saved with the slot).
 5. In **Game Profiles**, pick this auto-clicker slot for the games you want it in.
 
 > **Safety.** A run stops the moment the assigned app loses focus, when you quit

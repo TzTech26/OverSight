@@ -12,7 +12,7 @@ namespace Oversight.Services;
 /// <list type="bullet">
 ///   <item><b>Zoom</b> (toggle / in / out) — active only where the Game Profiles rules give
 ///     the foreground app a zoom slot; bindings come from that slot.</item>
-///   <item><b>Crosshair</b> (show/hide, hide-while-held) — active only where the rules give
+///   <item><b>Crosshair</b> (show/hide) — active only where the rules give
 ///     the app a crosshair slot; bindings come from that slot.</item>
 ///   <item><b>Open settings</b> — app-wide, registered whenever the manager runs, so the
 ///     settings window can always be reached.</item>
@@ -28,7 +28,6 @@ public sealed class HotkeyManager : IDisposable
     private const int HK_ZOOM_OUT           = 1003;
     private const int HK_OPEN_SETTINGS      = 1004;
     private const int HK_TOGGLE_CROSSHAIR   = 1005;
-    private const int HK_HOLD_HIDE_CROSSHAIR = 1006;
     private const int HK_AUTOCLICKER_STARTSTOP = 1007;
 
     private static readonly Dictionary<int, string> IdToName = new()
@@ -38,12 +37,23 @@ public sealed class HotkeyManager : IDisposable
         [HK_ZOOM_OUT]               = "ZoomOut",
         [HK_OPEN_SETTINGS]          = "OpenSettings",
         [HK_TOGGLE_CROSSHAIR]       = "ToggleCrosshair",
-        [HK_HOLD_HIDE_CROSSHAIR]    = "HoldHideCrosshair",
         [HK_AUTOCLICKER_STARTSTOP]  = "AutoClickerStartStop",
     };
 
+    // Action names as the Settings window shows them, for the conflict balloon.
+    private static readonly Dictionary<int, string> IdToLabel = new()
+    {
+        [HK_TOGGLE_ZOOM]            = "Toggle zoom",
+        [HK_ZOOM_IN]                = "Zoom in",
+        [HK_ZOOM_OUT]               = "Zoom out",
+        [HK_OPEN_SETTINGS]          = "Open settings",
+        [HK_TOGGLE_CROSSHAIR]       = "Show/hide crosshair",
+        [HK_AUTOCLICKER_STARTSTOP]  = "Start/stop auto clicker",
+    };
+
     private static readonly int[] ZoomIds        = [HK_TOGGLE_ZOOM, HK_ZOOM_IN, HK_ZOOM_OUT];
-    private static readonly int[] CrosshairIds   = [HK_TOGGLE_CROSSHAIR, HK_HOLD_HIDE_CROSSHAIR];
+    // "Hide while held" isn't here: CrosshairService polls it, so the game still gets the aim key.
+    private static readonly int[] CrosshairIds   = [HK_TOGGLE_CROSSHAIR];
     private static readonly int[] AutoClickerIds = [HK_AUTOCLICKER_STARTSTOP];
     private static readonly int[] AlwaysIds      = [HK_OPEN_SETTINGS];
 
@@ -70,12 +80,6 @@ public sealed class HotkeyManager : IDisposable
     /// virtual key code so the service can poll for release (RegisterHotKey only signals key-down).
     /// </summary>
     public event Action<uint>? HoldAutoClickerRequested;
-
-    /// <summary>
-    /// Fired on the initial key-down of the "hide while held" crosshair key, with its virtual
-    /// key code so the listener can poll for release (RegisterHotKey only signals key-down).
-    /// </summary>
-    public event Action<uint>? HoldHideCrosshairRequested;
 
     public HotkeyManager(AppSettings settings, MagnifierService magnifier)
     {
@@ -195,12 +199,11 @@ public sealed class HotkeyManager : IDisposable
             var name = IdToName[id];
             if (!_settings.Hotkeys.TryGetValue(name, out var b) || b.IsEmpty) continue;
 
-            // Mouse-button binds can't go through RegisterHotKey — the crosshair service
-            // watches the button state directly instead.
+            // Mouse-button binds can't go through RegisterHotKey.
             if (HotkeyBinding.IsMouseButton(b.VirtualKey)) continue;
 
             uint mods = b.Modifiers;
-            if (name is "ToggleZoom" or "OpenSettings" or "ToggleCrosshair" or "HoldHideCrosshair" or "AutoClickerStartStop")
+            if (name is "ToggleZoom" or "OpenSettings" or "ToggleCrosshair" or "AutoClickerStartStop")
                 mods |= NativeMethods.MOD_NOREPEAT;
 
             // Groups re-register on every focus change, so a conflict is announced once until that key registers again.
@@ -209,7 +212,7 @@ public sealed class HotkeyManager : IDisposable
                 _reportedConflicts.Remove(conflictKey);
             else if (System.Runtime.InteropServices.Marshal.GetLastWin32Error() == 1409   // ERROR_HOTKEY_ALREADY_REGISTERED
                      && _reportedConflicts.Add(conflictKey))
-                HotkeyConflict?.Invoke($"{name}: {b.DisplayName} is already in use by another application.");
+                HotkeyConflict?.Invoke($"{IdToLabel[id]}: {b.DisplayName} is already in use by another application.");
         }
     }
 
@@ -248,7 +251,6 @@ public sealed class HotkeyManager : IDisposable
             case HK_ZOOM_OUT:            _magnifier.ZoomOut();                break;
             case HK_OPEN_SETTINGS:       OpenSettingsRequested?.Invoke();     break;
             case HK_TOGGLE_CROSSHAIR:    ToggleCrosshairRequested?.Invoke();  break;
-            case HK_HOLD_HIDE_CROSSHAIR: OnHoldHideCrosshairHotkey();         break;
             case HK_AUTOCLICKER_STARTSTOP: OnAutoClickerHotkey();             break;
         }
     }
@@ -267,12 +269,6 @@ public sealed class HotkeyManager : IDisposable
         {
             ToggleAutoClickerRequested?.Invoke();
         }
-    }
-
-    private void OnHoldHideCrosshairHotkey()
-    {
-        if (_settings.Hotkeys.TryGetValue("HoldHideCrosshair", out var b) && !b.IsEmpty)
-            HoldHideCrosshairRequested?.Invoke(b.VirtualKey);
     }
 
     private void OnToggleZoomHotkey()

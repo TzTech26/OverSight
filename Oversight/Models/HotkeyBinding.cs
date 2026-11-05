@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Windows.Input;
 using Oversight.Native;
 
@@ -12,8 +13,10 @@ public class HotkeyBinding
     /// <summary>Win32 virtual-key code. 0 means unbound.</summary>
     public uint VirtualKey { get; set; } = 0;
 
+    [JsonIgnore]
     public bool IsEmpty => VirtualKey == 0;
 
+    [JsonIgnore]
     public string DisplayName => FormatHotkey(Modifiers, VirtualKey);
 
     /// <summary>
@@ -49,7 +52,21 @@ public class HotkeyBinding
         }
 
         var key = KeyInterop.KeyFromVirtualKey((int)vk);
-        sb.Append(key == Key.None ? $"VK_0x{vk:X2}" : key.ToString());
+        sb.Append(key switch
+        {
+            Key.None                         => $"VK_0x{vk:X2}",
+            Key.OemPlus                      => "=",
+            Key.OemMinus                     => "-",
+            Key.Oem3                         => "`",
+            Key.Next                         => "PageDown",
+            Key.Prior                        => "PageUp",
+            Key.Return                       => "Enter",
+            Key.Capital                      => "CapsLock",
+            Key.Escape                       => "Esc",
+            >= Key.D0 and <= Key.D9          => $"{key - Key.D0}",
+            >= Key.NumPad0 and <= Key.NumPad9 => $"Num {key - Key.NumPad0}",
+            _                                => key.ToString(),
+        });
         return sb.ToString();
     }
 }

@@ -108,7 +108,7 @@ public partial class App : Application
         _hotkeys     = new HotkeyManager(_config.Settings, _magnifier);
         _watcher     = new ProcessWatcher(_config, _hotkeys, _crosshair, _autoClicker);
         _updater     = new Updater(_config);
-        _updater.QuitRequested += () => Dispatcher.BeginInvoke(Shutdown);
+        _updater.QuitRequested += () => Dispatcher.BeginInvoke(() => { _tray?.SuppressUnsavedPrompt(); Shutdown(); });
         _tray        = new TrayManager(_config, _hotkeys, _magnifier, _watcher, _crosshair, _autoClicker, _updater);
 
         // Wire up hotkey conflict notifications → tray balloon
@@ -122,9 +122,6 @@ public partial class App : Application
 
         // "Show/hide crosshair" hotkey
         _hotkeys.ToggleCrosshairRequested += () => _crosshair?.ToggleHidden();
-
-        // "Hide while held" crosshair hotkey (e.g. aiming down sights)
-        _hotkeys.HoldHideCrosshairRequested += vk => _crosshair?.BeginHoldHide(vk);
 
         // Auto-clicker start/stop hotkey (Toggle vs Hold decided by the active slot)
         _hotkeys.ToggleAutoClickerRequested += () => _autoClicker?.ToggleRun();
@@ -185,7 +182,7 @@ public partial class App : Application
     /// Appends an unhandled exception to error.log in the config folder (trimmed to the last
     /// ~256 KB) so problems swallowed by the keep-alive handler can still be diagnosed. Never throws.
     /// </summary>
-    private static void LogError(object? error)
+    internal static void LogError(object? error)
     {
         try
         {

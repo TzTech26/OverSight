@@ -5,7 +5,7 @@
         xmlns:ui="clr-namespace:Oversight.UI"
         Title="Oversight"
         Icon="pack://application:,,,/Assets/app.ico"
-        Width="1060" Height="790" MinWidth="900" MinHeight="620"
+        Width="1060" Height="790" MinWidth="1040" MinHeight="620"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
         ShowInTaskbar="True"
@@ -318,7 +318,8 @@
                             <!-- Save slot -->
                             <Border Style="{StaticResource SlotCard}">
                                 <StackPanel>
-                                    <StackPanel Orientation="Horizontal">
+                                    <!-- Fixed height so the Unsaved pill doesn't shift the page when it appears. -->
+                                    <StackPanel Orientation="Horizontal" Height="24">
                                         <TextBlock Text="ZOOM SAVE SLOT" Style="{StaticResource Overline}" VerticalAlignment="Center"/>
                                         <Border x:Name="PillZoomUnsaved" Style="{StaticResource UnsavedPill}" Margin="12,0,0,0">
                                             <StackPanel Orientation="Horizontal">
@@ -355,8 +356,6 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Default zoom level" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Magnification when zoom turns on."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Slider x:Name="SliderZoom" Style="{StaticResource SliderBox}"
@@ -472,7 +471,6 @@
                             <TextBlock Text="Keybinds" Style="{StaticResource SectionHeader}"/>
                             <Border Style="{StaticResource Card}">
                                 <StackPanel>
-                                    <TextBlock x:Name="TxtZoomHkNote" Style="{StaticResource RowDesc}" Margin="0,14,0,2"/>
                                     <Grid Style="{StaticResource SettingRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -480,8 +478,6 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Zoom activation" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Toggle: press on, press off. Hold: on while held."/>
                                         </StackPanel>
                                         <ComboBox x:Name="CbActivation" Grid.Column="1" Width="200" VerticalAlignment="Center"
                                                   DisplayMemberPath="Display" SelectionChanged="CbActivation_Changed"
@@ -533,12 +529,12 @@
 
                             <TextBlock Text="Crosshair" Style="{StaticResource PageTitle}"/>
                             <TextBlock Style="{StaticResource PageSubtitle}"
-                                       Text="Works in Borderless or Windowed games. Set where it shows in Game Profiles."/>
+                                       Text="Set where it shows in Game Profiles."/>
 
                             <!-- Save slot -->
                             <Border Style="{StaticResource SlotCard}">
                                 <StackPanel>
-                                    <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal" Height="24">
                                         <TextBlock Text="CROSSHAIR SAVE SLOT" Style="{StaticResource Overline}" VerticalAlignment="Center"/>
                                         <Border x:Name="PillXhUnsaved" Style="{StaticResource UnsavedPill}" Margin="12,0,0,0">
                                             <StackPanel Orientation="Horizontal">
@@ -743,7 +739,6 @@
                             <TextBlock Text="Keybinds" Style="{StaticResource SectionHeader}"/>
                             <Border Style="{StaticResource Card}">
                                 <StackPanel>
-                                    <TextBlock x:Name="TxtXhHkNote" Style="{StaticResource RowDesc}" Margin="0,14,0,2"/>
                                     <Grid Style="{StaticResource SettingRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -764,7 +759,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Hide while held (ADS)" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Hidden while held. Bind your aim-down-sights button."/>
+                                                       Text="Bind your aim-down-sights button."/>
                                         </StackPanel>
                                         <local:HotkeyCaptureBox x:Name="HkHoldHideCrosshair" Grid.Column="1"
                                                                 AllowMouseButtons="True"
@@ -789,7 +784,7 @@
                             <!-- Save slot -->
                             <Border Style="{StaticResource SlotCard}">
                                 <StackPanel>
-                                    <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal" Height="24">
                                         <TextBlock Text="AUTO-CLICKER SAVE SLOT" Style="{StaticResource Overline}" VerticalAlignment="Center"/>
                                         <Border x:Name="PillAcUnsaved" Style="{StaticResource UnsavedPill}" Margin="12,0,0,0">
                                             <StackPanel Orientation="Horizontal">
@@ -837,14 +832,13 @@
                                         </StackPanel>
                                     </Grid>
                                     <Border Style="{StaticResource RowDivider}"/>
-                                    <Grid Style="{StaticResource SettingRow}">
+                                    <Grid x:Name="RowAcClickType" Style="{StaticResource SettingRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Mouse click type" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}" Text="Mouse buttons only."/>
                                         </StackPanel>
                                         <ComboBox x:Name="CbAcClickType" Grid.Column="1" Width="200" VerticalAlignment="Center"
                                                   DisplayMemberPath="Display" SelectionChanged="CbAcClickType_Changed"
@@ -967,7 +961,7 @@
                             <TextBlock Text="Position" Style="{StaticResource SectionHeader}"/>
                             <Border Style="{StaticResource Card}">
                                 <StackPanel>
-                                    <Grid Style="{StaticResource SettingRow}">
+                                    <Grid x:Name="RowAcFixedToggle" Style="{StaticResource SettingRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -975,7 +969,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Click at a fixed screen point" Style="{StaticResource RowTitle}"/>
                                             <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Clicks at the X, Y below instead of the cursor. Mouse buttons only."/>
+                                                       Text="Clicks at the X, Y below instead of the cursor."/>
                                         </StackPanel>
                                         <CheckBox x:Name="ChkAcFixedPos" Grid.Column="1" VerticalAlignment="Center"
                                                   AutomationProperties.Name="Click at a fixed screen point"
@@ -1010,7 +1004,6 @@
                             <TextBlock Text="Activation &amp; safety" Style="{StaticResource SectionHeader}"/>
                             <Border Style="{StaticResource Card}">
                                 <StackPanel>
-                                    <TextBlock x:Name="TxtAcHkNote" Style="{StaticResource RowDesc}" Margin="0,14,0,2"/>
                                     <Grid Style="{StaticResource SettingRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -1028,8 +1021,6 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Start / stop activation" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Toggle: press to start and stop. Hold: clicks while held."/>
                                         </StackPanel>
                                         <ComboBox x:Name="CbAcActivation" Grid.Column="1" Width="200" VerticalAlignment="Center"
                                                   DisplayMemberPath="Display" SelectionChanged="CbAcActivation_Changed"
@@ -1047,7 +1038,7 @@
                                                        Text="Delay after start, so a runaway clicker is easy to catch."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBox x:Name="TxtAcSafetySeconds" Width="64" MaxLength="3"
+                                            <TextBox x:Name="TxtAcSafetySeconds" Width="64" MaxLength="2"
                                                      IsEnabled="{Binding IsChecked, ElementName=ChkAcSafety}"
                                                      TextChanged="TxtAcSafetySeconds_Changed"
                                                      AutomationProperties.Name="Safety countdown seconds"/>
@@ -1065,7 +1056,7 @@
                                 <DockPanel>
                                     <TextBlock Style="{StaticResource CalloutGlyph}"/>
                                     <TextBlock TextWrapping="Wrap" FontSize="12.5" LineHeight="18" Foreground="{DynamicResource TextLabelBrush}"
-                                               Text="Stops when you press the key again, the game loses focus, or Oversight quits. May not work in exclusive fullscreen."/>
+                                               Text="Stops when you press the key again, the game loses focus, or Oversight quits."/>
                                 </DockPanel>
                             </Border>
 
@@ -1148,19 +1139,21 @@
                         <Border Grid.Row="5" Style="{StaticResource Card}" Padding="12,12,12,12">
                             <DockPanel>
                                 <!-- Column headers -->
-                                <Grid DockPanel.Dock="Top" Margin="14,4,24,8">
+                                <!-- Same columns and insets (item border 1 + padding 12) as the row template below, so headers sit over their combos. -->
+                                <Grid DockPanel.Dock="Top" Margin="13,4,13,8">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="34"/>
+                                        <ColumnDefinition Width="*" MinWidth="120"/>
+                                        <ColumnDefinition Width="*" MinWidth="96" MaxWidth="150"/>
                                         <ColumnDefinition Width="10"/>
-                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*" MinWidth="96" MaxWidth="150"/>
                                         <ColumnDefinition Width="10"/>
-                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*" MinWidth="96" MaxWidth="150"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="GAME"         Style="{StaticResource Overline}"/>
-                                    <TextBlock Grid.Column="1" Text="ZOOM"         Style="{StaticResource Overline}"/>
-                                    <TextBlock Grid.Column="3" Text="CROSSHAIR"    Style="{StaticResource Overline}"/>
-                                    <TextBlock Grid.Column="5" Text="AUTO CLICKER" Style="{StaticResource Overline}"/>
+                                    <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Text="GAME" Style="{StaticResource Overline}"/>
+                                    <TextBlock Grid.Column="2" Text="ZOOM"         Style="{StaticResource Overline}"/>
+                                    <TextBlock Grid.Column="4" Text="CROSSHAIR"    Style="{StaticResource Overline}"/>
+                                    <TextBlock Grid.Column="6" Text="AUTO CLICKER" Style="{StaticResource Overline}"/>
                                 </Grid>
 
                                 <ListBox x:Name="LbRules" SelectionMode="Single" MinHeight="170"
@@ -1171,13 +1164,13 @@
                                         <DataTemplate>
                                             <Grid Margin="0,1">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="150"/>
+                                                    <ColumnDefinition Width="34"/>
+                                                    <ColumnDefinition Width="*" MinWidth="120"/>
+                                                    <ColumnDefinition Width="*" MinWidth="96" MaxWidth="150"/>
                                                     <ColumnDefinition Width="10"/>
-                                                    <ColumnDefinition Width="150"/>
+                                                    <ColumnDefinition Width="*" MinWidth="96" MaxWidth="150"/>
                                                     <ColumnDefinition Width="10"/>
-                                                    <ColumnDefinition Width="150"/>
+                                                    <ColumnDefinition Width="*" MinWidth="96" MaxWidth="150"/>
                                                 </Grid.ColumnDefinitions>
                                                 <Border Width="34" Height="34" CornerRadius="6" VerticalAlignment="Center"
                                                         Background="{DynamicResource AccentSoftBrush}"
@@ -1231,8 +1224,6 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
                                             <TextBlock Text="Open Oversight settings" Style="{StaticResource RowTitle}"/>
-                                            <TextBlock Style="{StaticResource RowDesc}"
-                                                       Text="Shows or hides this window from anywhere."/>
                                         </StackPanel>
                                         <local:HotkeyCaptureBox x:Name="HkOpenSettings" Grid.Column="1"
                                                                 AutomationProperties.Name="Open settings keybind"/>
@@ -1272,7 +1263,7 @@
                                 <DockPanel>
                                     <TextBlock Style="{StaticResource CalloutGlyph}" Text="&#xE765;"/>
                                     <TextBlock TextWrapping="Wrap" FontSize="12.5" LineHeight="18" Foreground="{DynamicResource TextLabelBrush}"
-                                               Text="Each feature's keybinds are on its own page. Escape clears a key box."/>
+                                               Text="Escape clears a key box."/>
                                 </DockPanel>
                             </Border>
 

@@ -15,7 +15,7 @@ namespace Oversight.Services;
 ///     without touching any saved slot.</item>
 ///   <item><b>Hold-to-hide</b> — the "Hide while held" key (e.g. aiming down sights) hides the
 ///     crosshair only while physically down, polled via <see cref="NativeMethods.GetAsyncKeyState"/>
-///     since RegisterHotKey only signals key-down. If the crosshair is already hidden by the
+///     so the key still reaches the game. If the crosshair is already hidden by the
 ///     toggle above, holding and releasing this key leaves it hidden — both flags must be clear
 ///     to show.</item>
 /// </list>
@@ -37,7 +37,6 @@ public sealed class CrosshairService : IDisposable
     private bool _userHidden;               // "Show/hide crosshair" hotkey (session only)
     private bool _holdHidden;               // "Hide while held" key is currently down
     private uint _holdHideKey;              // virtual key being polled
-    private bool _watchingMouse;            // continuous watch: bind is a mouse button (no WM_HOTKEY for those)
     private CrosshairSettings? _preview;    // settings-window live preview override
     private bool _disposed;
 
@@ -46,16 +45,14 @@ public sealed class CrosshairService : IDisposable
         _config     = config;
         _dispatcher = Dispatcher.CurrentDispatcher;
 
-        // Live slot switched (tray, settings save, or per-app auto-switch) → restyle.
+        // Live slot switched (settings save or per-app auto-switch) → restyle.
         _config.ProfilesChanged += Refresh;
 
         // Monitor layout changes move the centre point.
         Microsoft.Win32.SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
 
-        // Polls the hold-hide key's live state. Two uses: a keyboard bind polls for release
-        // after its WM_HOTKEY key-down (RegisterHotKey never signals key-up), and a mouse
-        // bind — which RegisterHotKey can't handle at all — is watched continuously for both
-        // press and release while the rules have a crosshair active here.
+        // Polls the hold-hide key (keyboard or mouse) for press and release while the rules have
+        // a crosshair active here. Polling, unlike RegisterHotKey, leaves the key to the game.
         _holdPollTimer = new DispatcherTimer(DispatcherPriority.Normal) { Interval = TimeSpan.FromMilliseconds(15) };
         _holdPollTimer.Tick += OnHoldPollTick;
     }
@@ -71,37 +68,32 @@ public sealed class CrosshairService : IDisposable
         {
             // Nothing to hide-while-held for; drop any stale hold state so a leftover flag
             // can't strand the crosshair hidden the next time this app's rules re-enable it.
-            _holdHidden    = false;
-            _watchingMouse = false;
+            _holdHidden = false;
             _holdPollTimer.Stop();
         }
         Refresh();
     }
 
     /// <summary>
-    /// Starts/stops the continuous watch used by mouse-button hold-hide binds (right mouse,
-    /// Mouse 4/5…). RegisterHotKey can't see mouse buttons, so while the rules have a
-    /// crosshair active and the live slot's bind is a mouse button, the poll timer tracks
-    /// the button state for both press and release. Called on every <see cref="Refresh"/>,
-    /// so slot switches re-evaluate it automatically.
+    /// Starts/stops the hold-hide watch: while the rules have a crosshair active and the live
+    /// slot has a hold-hide bind, the poll timer tracks that key for both press and release.
+    /// Called on every <see cref="Refresh"/>, so slot switches re-evaluate it automatically.
     /// </summary>
     private void UpdateHoldWatch()
     {
-        bool wantMouseWatch =
+        bool wantWatch =
             _activationAllowed &&
-            _config.Settings.Hotkeys.TryGetValue("HoldHideCrosshair", out var b) &&
-            !b.IsEmpty && HotkeyBinding.IsMouseButton(b.VirtualKey);
+            _config.Settings.Hotkeys.TryGetValue("HoldHideCrosshair", out var b) && !b.IsEmpty;
 
-        if (wantMouseWatch)
+        if (wantWatch)
         {
-            _holdHideKey   = _config.Settings.Hotkeys["HoldHideCrosshair"].VirtualKey;
-            _watchingMouse = true;
+            _holdHideKey = _config.Settings.Hotkeys["HoldHideCrosshair"].VirtualKey;
             _holdPollTimer.Start();
         }
         else
         {
-            _watchingMouse = false;
-            if (!_holdHidden) _holdPollTimer.Stop();   // keyboard path stops itself on release
+            _holdHidden = false;   // bind cleared mid-hold: don't strand the crosshair hidden
+            _holdPollTimer.Stop();
         }
     }
 
@@ -110,20 +102,6 @@ public sealed class CrosshairService : IDisposable
     {
         _userHidden = !_userHidden;
         Refresh();
-    }
-
-    /// <summary>
-    /// "Hide while held" key-down handler: hides the crosshair immediately and starts polling
-    /// <paramref name="virtualKey"/> for release, at which point it's shown again (unless
-    /// <see cref="ToggleHidden"/> already hid it — see <see cref="Refresh"/>).
-    /// </summary>
-    public void BeginHoldHide(uint virtualKey)
-    {
-        if (virtualKey == 0) return;
-        _holdHideKey = virtualKey;
-        _holdHidden  = true;
-        Refresh();
-        _holdPollTimer.Start();
     }
 
     private void OnHoldPollTick(object? sender, EventArgs e)
@@ -135,11 +113,6 @@ public sealed class CrosshairService : IDisposable
             _holdHidden = down;
             Refresh();
         }
-
-        // A keyboard bind only needs the timer between key-down and release; a mouse bind
-        // is watched continuously (the press itself is only visible to this poll).
-        if (!down && !_watchingMouse)
-            _holdPollTimer.Stop();
     }
 
     /// <summary>

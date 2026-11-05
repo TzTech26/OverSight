@@ -5,7 +5,8 @@ namespace Oversight.Services;
 public static class StartupManager
 {
     private const string RunKey          = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName       = "Oversight";
+    // A profile copy (OVERSIGHT_PROFILE) gets its own value so it never touches the real install's entry.
+    private static readonly string ValueName = "Oversight" + AppProfile.Suffix;
     private const string LegacyValueName = "ScreenZoom";   // pre-rebrand entry
 
     public static bool IsEnabled

@@ -51,7 +51,7 @@ public sealed class TrayManager : IDisposable
             Visible = false,
         };
 
-        _tray.Click += (_, _) => ShowSettings();
+        _tray.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) ShowSettings(); };
         _tray.BalloonTipClicked += (_, _) => ShowSettings();
         _tray.ContextMenuStrip = BuildMenu();
 
@@ -62,20 +62,9 @@ public sealed class TrayManager : IDisposable
         // The WinForms menu can't observe the WPF DynamicResource palette, so rebuild
         // it with theme-matched colours whenever the system flips light/dark.
         ThemeManager.ThemeChanged += OnThemeChanged;
-
-        // Rebuild so the slot submenus reflect added/renamed/deleted slots and the
-        // active-slot check marks, whether changed from the tray or the settings window.
-        _config.ProfilesChanged += OnProfilesChanged;
     }
 
     private void OnThemeChanged()
-    {
-        var old = _tray.ContextMenuStrip;
-        _tray.ContextMenuStrip = BuildMenu();
-        old?.Dispose();
-    }
-
-    private void OnProfilesChanged()
     {
         var old = _tray.ContextMenuStrip;
         _tray.ContextMenuStrip = BuildMenu();
@@ -101,13 +90,12 @@ public sealed class TrayManager : IDisposable
         _autoClicker.RunStateChanged -= OnAutoClickerStateChanged;
         _hotkeys.OpenSettingsRequested -= ToggleSettings;
         ThemeManager.ThemeChanged -= OnThemeChanged;
-        _config.ProfilesChanged -= OnProfilesChanged;
         _tray.Visible = false;
         _tray.Dispose();
         _icon.Dispose();
         if (_settingsWindow is not null)
         {
-            _settingsWindow.SuppressUnsavedPrompt = true;   // app is quitting — don't prompt
+            SuppressUnsavedPrompt();
             _settingsWindow.Close();
         }
     }
@@ -126,76 +114,15 @@ public sealed class TrayManager : IDisposable
         var itemToggle = new ToolStripMenuItem("Toggle Zoom");
         itemToggle.Click += (_, _) => _magnifier.Toggle();
 
-        var itemZoomSlots = BuildSlotMenu(dark, "Zoom slot",
-            _config.ZoomProfileNames, _config.ActiveZoomProfileName, SwitchZoomSlot);
-
-        var itemXhSlots = BuildSlotMenu(dark, "Crosshair",
-            _config.CrosshairProfileNames, _config.ActiveCrosshairProfileName, SwitchCrosshairSlot);
-
-        var itemAcSlots = BuildSlotMenu(dark, "Auto clicker",
-            _config.AutoClickerProfileNames, _config.ActiveAutoClickerProfileName, SwitchAutoClickerSlot);
-
         var itemSettings = new ToolStripMenuItem("Settings…");
         itemSettings.Click += (_, _) => ShowSettings();
 
         var itemQuit = new ToolStripMenuItem("Quit");
         itemQuit.Click += (_, _) => QuitApp();
 
-        menu.Items.AddRange([itemToggle, new ToolStripSeparator(),
-                             itemZoomSlots, itemXhSlots, itemAcSlots,
-                             new ToolStripSeparator(), itemSettings,
+        menu.Items.AddRange([itemToggle, new ToolStripSeparator(), itemSettings,
                              new ToolStripSeparator(), itemQuit]);
         return menu;
-    }
-
-    /// <summary>Builds a "… ▸" submenu listing save slots with a check on the active one.</summary>
-    private static ToolStripMenuItem BuildSlotMenu(bool dark, string title,
-        IReadOnlyList<string> names, string active, Action<string> onPick)
-    {
-        var root = new ToolStripMenuItem(title);
-
-        // The submenu is a separate ToolStripDropDown, so it needs its own colours + renderer.
-        root.DropDown.BackColor = dark ? Color.FromArgb(0x15, 0x14, 0x2A) : Color.FromArgb(0xFF, 0xFF, 0xFF);
-        root.DropDown.ForeColor = dark ? Color.FromArgb(0xE2, 0xE8, 0xF0) : Color.FromArgb(0x1E, 0x1B, 0x2E);
-        root.DropDown.Renderer  = new ThemedMenuRenderer(dark);
-
-        foreach (var name in names)
-        {
-            var captured = name;
-            var item = new ToolStripMenuItem(name)
-            {
-                Checked      = string.Equals(name, active, StringComparison.Ordinal),
-                CheckOnClick = false,
-            };
-            item.Click += (_, _) => onPick(captured);
-            root.DropDownItems.Add(item);
-        }
-
-        return root;
-    }
-
-    /// <summary>Switches the live zoom slot and refreshes the services that read settings.</summary>
-    private void SwitchZoomSlot(string name)
-    {
-        _config.SwitchZoomProfile(name);   // raises ProfilesChanged → menu rebuild (updates the check)
-        _hotkeys.ReloadBindings();
-        _watcher.Reload();
-    }
-
-    /// <summary>Switches the live crosshair slot and refreshes the overlay.</summary>
-    private void SwitchCrosshairSlot(string name)
-    {
-        _config.SwitchCrosshairProfile(name);
-        _hotkeys.ReloadBindings();
-        _watcher.Reload();
-    }
-
-    /// <summary>Switches the live auto-clicker slot.</summary>
-    private void SwitchAutoClickerSlot(string name)
-    {
-        _config.SwitchAutoClickerProfile(name);
-        _hotkeys.ReloadBindings();
-        _watcher.Reload();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -268,8 +195,15 @@ public sealed class TrayManager : IDisposable
         _settingsWindow.Focus();
     }
 
-    private static void QuitApp()
+    /// <summary>The app is quitting: unsaved Settings edits are discarded without a prompt.</summary>
+    public void SuppressUnsavedPrompt()
     {
+        if (_settingsWindow is not null) _settingsWindow.SuppressUnsavedPrompt = true;
+    }
+
+    private void QuitApp()
+    {
+        SuppressUnsavedPrompt();   // WPF closes windows inside Shutdown, before Dispose runs
         System.Windows.Application.Current.Shutdown();
     }
 

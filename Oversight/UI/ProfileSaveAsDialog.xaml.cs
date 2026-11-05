@@ -70,8 +70,8 @@ public partial class ProfileSaveAsDialog : Window
 
         BtnSave.IsEnabled = true;
         TxtHint.Text = _existing.Contains(name)
-            ? $"Overwrites the existing profile “{name}”."
-            : $"Creates a new profile “{name}”.";
+            ? $"Overwrites the existing slot “{name}”."
+            : $"Creates a new slot “{name}”.";
     }
 
     private void Ok_Click(object sender, RoutedEventArgs e) => TryAccept();

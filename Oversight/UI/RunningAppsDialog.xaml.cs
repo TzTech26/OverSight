@@ -14,7 +14,10 @@ namespace Oversight.UI;
 /// </summary>
 public partial class RunningAppsDialog : Window
 {
-    public sealed record RunningApp(string ProcessName, string DisplayName);
+    public sealed record RunningApp(string ProcessName, string DisplayName)
+    {
+        public override string ToString() => DisplayName;   // list item accessible name
+    }
 
     private static readonly string OwnProcess = Process.GetCurrentProcess().ProcessName;
 
@@ -48,6 +51,10 @@ public partial class RunningAppsDialog : Window
 
             long ex = (long)NativeMethods.GetWindowLongPtr(hwnd, NativeMethods.GWL_EXSTYLE);
             if ((ex & NativeMethods.WS_EX_TOOLWINDOW) != 0) return true;   // skip tool windows
+
+            // "Visible" but cloaked: background UWP hosts like TextInputHost and ApplicationFrameHost.
+            if (NativeMethods.DwmGetWindowAttribute(hwnd, NativeMethods.DWMWA_CLOAKED, out int cloaked, sizeof(int)) == 0
+                && cloaked != 0) return true;
 
             NativeMethods.GetWindowThreadProcessId(hwnd, out uint pid);
             if (pid == 0) return true;

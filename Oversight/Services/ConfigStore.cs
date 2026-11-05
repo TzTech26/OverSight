@@ -111,20 +111,25 @@ public sealed class ConfigStore
             {
                 // First run after the Oversight rebrand: adopt the old ScreenZoom config.
                 LoadFrom(File.ReadAllText(LegacyConfigPath));
+                ComposeLive();   // Save pushes the live values into the active slots, so fill them first
                 Save();   // persist the migrated config in the new location right away
             }
             else
             {
                 InitDefault();
             }
+            ComposeLive();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ConfigStore] Load failed: {ex.Message}");
+            App.LogError(ex);
+            // The next Save overwrites settings.json with defaults, so keep the unreadable file.
+            try { if (File.Exists(ConfigPath)) File.Copy(ConfigPath, ConfigPath + ".bad", overwrite: true); }
+            catch (Exception copyEx) { System.Diagnostics.Debug.WriteLine($"[ConfigStore] Backup failed: {copyEx.Message}"); }
             InitDefault();
+            ComposeLive();
         }
-
-        ComposeLive();
     }
 
     private void LoadFrom(string json)
@@ -277,6 +282,16 @@ public sealed class ConfigStore
     /// <summary>Repairs anything a hand-edited or older file might get wrong.</summary>
     private void EnsureValid()
     {
+        _zoomProfiles ??= [];
+        _xhProfiles   ??= [];
+        _acProfiles   ??= [];
+        _appRules     ??= [];
+        _zoomProfiles.RemoveAll(p => p is null);
+        _xhProfiles.RemoveAll(p => p is null);
+        _acProfiles.RemoveAll(p => p is null);
+        _appRules.RemoveAll(r => r is null);
+        Updates ??= new();
+
         if (_zoomProfiles.Count == 0) _zoomProfiles.Add(new ZoomProfile { Name = DefaultZoomName });
         if (_xhProfiles.Count   == 0) _xhProfiles = CrosshairPresets.DefaultProfiles();
         if (_acProfiles.Count   == 0) _acProfiles = AutoClickerPresets.DefaultProfiles();
@@ -286,6 +301,7 @@ public sealed class ConfigStore
         {
             if (string.IsNullOrWhiteSpace(p.Name) || !seenZoom.Add(p.Name))
                 p.Name = MakeUnique(string.IsNullOrWhiteSpace(p.Name) ? DefaultZoomName : p.Name, seenZoom);
+            p.Settings ??= new ZoomSettings();
             Normalize(p.Settings);
             // The old default (bare F12) can't be registered on many PCs; move it to the new default.
             if (p.Settings.Hotkeys.TryGetValue("ToggleZoom", out var tz) && tz is { Modifiers: 0, VirtualKey: 0x7B })
@@ -298,6 +314,7 @@ public sealed class ConfigStore
             if (string.IsNullOrWhiteSpace(p.Name) || !seenXh.Add(p.Name))
                 p.Name = MakeUnique(string.IsNullOrWhiteSpace(p.Name) ? "Crosshair" : p.Name, seenXh);
             p.Style          ??= new CrosshairSettings();
+            p.Style.ColorHex ??= new CrosshairSettings().ColorHex;
             p.ToggleHotkey   ??= CrosshairProfile.DefaultToggleHotkey();
             p.HoldHideHotkey ??= new HotkeyBinding();
         }
@@ -325,6 +342,9 @@ public sealed class ConfigStore
     /// <summary>Backfills missing zoom keybinds and coerces the engine (see memory notes).</summary>
     private static void Normalize(ZoomSettings s)
     {
+        s.Hotkeys ??= [];
+        foreach (var name in s.Hotkeys.Where(kv => kv.Value is null).Select(kv => kv.Key).ToList())
+            s.Hotkeys.Remove(name);
         foreach (var (name, binding) in new ZoomSettings().Hotkeys)
             s.Hotkeys.TryAdd(name, binding);
 
@@ -384,7 +404,10 @@ public sealed class ConfigStore
                 Updates                   = Updates,
                 ShowHotkeyWarnings        = ShowHotkeyWarnings,
             };
-            File.WriteAllText(ConfigPath, JsonSerializer.Serialize(file, JsonOpts));
+            // Write then swap, so a crash mid-write can't leave a truncated settings.json.
+            var tmp = ConfigPath + ".tmp";
+            File.WriteAllText(tmp, JsonSerializer.Serialize(file, JsonOpts));
+            File.Move(tmp, ConfigPath, overwrite: true);
         }
         catch (Exception ex)
         {
@@ -493,7 +516,7 @@ public sealed class ConfigStore
         ProfilesChanged?.Invoke();
     }
 
-    /// <summary>Makes a zoom slot live and persists the choice (tray / settings window).</summary>
+    /// <summary>Makes a zoom slot live and persists the choice (settings window).</summary>
     public void SwitchZoomProfile(string name)
     {
         var target = _zoomProfiles.FirstOrDefault(p => p.Name == name);
@@ -630,7 +653,7 @@ public sealed class ConfigStore
         ProfilesChanged?.Invoke();
     }
 
-    /// <summary>Makes a crosshair slot live and persists the choice (tray / settings window).</summary>
+    /// <summary>Makes a crosshair slot live and persists the choice (settings window).</summary>
     public void SwitchCrosshairProfile(string name)
     {
         var target = _xhProfiles.FirstOrDefault(p => p.Name == name);
@@ -756,7 +779,7 @@ public sealed class ConfigStore
         ProfilesChanged?.Invoke();
     }
 
-    /// <summary>Makes an auto-clicker slot live and persists the choice (tray / settings window).</summary>
+    /// <summary>Makes an auto-clicker slot live and persists the choice (settings window).</summary>
     public void SwitchAutoClickerProfile(string name)
     {
         var target = _acProfiles.FirstOrDefault(p => p.Name == name);

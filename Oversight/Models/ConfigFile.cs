@@ -41,7 +41,7 @@ public class ConfigFile
     public string? DefaultAutoClickerProfile { get; set; }
 
     /// <summary>App-wide "Open settings" hotkey — registered regardless of the per-app rules.</summary>
-    public HotkeyBinding OpenSettingsHotkey { get; set; } = new();
+    public HotkeyBinding? OpenSettingsHotkey { get; set; }
 
     /// <summary>App-wide update preferences (General page).</summary>
     public UpdateSettings Updates { get; set; } = new();

@@ -26,7 +26,7 @@ namespace Oversight.Services;
 ///
 /// <para><b>Timing.</b> The click loop runs on its own background thread paced by a
 /// <see cref="Stopwatch"/> (not a WPF timer, which only ticks at ~15 ms). While it runs the
-/// system timer resolution is raised to 1 ms, so intervals down to ~1 ms are honoured.</para>
+/// system timer resolution is raised to 1 ms, so intervals down to 10 ms are honoured.</para>
 /// </summary>
 public sealed class AutoClickerService : IDisposable
 {
@@ -39,6 +39,7 @@ public sealed class AutoClickerService : IDisposable
     private bool _armed;                             // a run is active (counting down or clicking) — UI thread only
     private bool _holdMode;                          // started via Hold; poll the key for release
     private uint _holdKey;                           // start/stop key being polled in Hold mode
+    private uint _targetPid;                         // foreground process when the run started
     private AutoClickerSettings _active = new();     // snapshot for the current run
     private Thread?                  _clickThread;   // background click loop
     private CancellationTokenSource? _runCts;        // cancels the current run's loop
@@ -98,6 +99,7 @@ public sealed class AutoClickerService : IDisposable
         _armed    = true;
         _holdMode = holdMode;
         _holdKey  = holdKey;
+        _targetPid = ForegroundPid();
 
         if (holdMode) _holdPollTimer.Start();
         RunStateChanged?.Invoke();
@@ -124,8 +126,9 @@ public sealed class AutoClickerService : IDisposable
         var cts = new CancellationTokenSource();
         _runCts = cts;
         var snapshot = _active;
+        uint targetPid = _targetPid;
 
-        _clickThread = new Thread(() => ClickLoop(snapshot, cts.Token))
+        _clickThread = new Thread(() => ClickLoop(snapshot, targetPid, cts.Token))
         {
             IsBackground = true,
             Name         = "Oversight-AutoClicker",
@@ -139,8 +142,12 @@ public sealed class AutoClickerService : IDisposable
     /// timer resolution so short intervals are honoured. Exits when the run is cancelled
     /// (stop / focus lost / hold released) or a stop-condition is met.
     /// </summary>
-    private void ClickLoop(AutoClickerSettings s, CancellationToken ct)
+    private void ClickLoop(AutoClickerSettings s, uint targetPid, CancellationToken ct)
     {
+        // The start/stop combo's Ctrl/Alt/Shift/Win would otherwise turn the first clicks into modified clicks.
+        while (!ct.IsCancellationRequested && ModifiersHeld())
+            Thread.Sleep(5);
+
         NativeMethods.TimeBeginPeriod(1);
         var sw       = Stopwatch.StartNew();
         var healthSw = Stopwatch.StartNew();
@@ -154,6 +161,10 @@ public sealed class AutoClickerService : IDisposable
             while (!ct.IsCancellationRequested)
             {
                 if (s.RepeatMode == RepeatMode.ForDuration && sw.Elapsed.TotalMilliseconds >= durationMs)
+                    break;
+
+                // The process watcher is paused while Settings is open, so check focus here too.
+                if (ForegroundPid() != targetPid)
                     break;
 
                 // Adaptive limiter: a few times per frame, check that the foreground window is
@@ -205,6 +216,16 @@ public sealed class AutoClickerService : IDisposable
         return NativeMethods.SendMessageTimeout(hwnd, NativeMethods.WM_NULL, IntPtr.Zero, IntPtr.Zero,
             NativeMethods.SMTO_ABORTIFHUNG | NativeMethods.SMTO_BLOCK, timeoutMs, out _) != IntPtr.Zero;
     }
+
+    private static uint ForegroundPid()
+    {
+        NativeMethods.GetWindowThreadProcessId(NativeMethods.GetForegroundWindow(), out uint pid);
+        return pid;
+    }
+
+    private static bool ModifiersHeld() =>
+        new[] { 0x10, 0x11, 0x12, 0x5B, 0x5C }   // Shift, Ctrl, Alt, LWin, RWin
+            .Any(vk => (NativeMethods.GetAsyncKeyState(vk) & 0x8000) != 0);
 
     /// <summary>Waits until <paramref name="dueMs"/> on <paramref name="sw"/>, cheaply then precisely.</summary>
     private static void WaitUntil(Stopwatch sw, double dueMs, CancellationToken ct)

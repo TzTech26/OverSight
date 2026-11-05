@@ -215,6 +215,12 @@ internal static class NativeMethods
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
+    /// <summary>Non-zero <c>DWMWA_CLOAKED</c> = the window is hidden by DWM (suspended UWP hosts, other desktops).</summary>
+    public const int DWMWA_CLOAKED = 14;
+
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out int pvAttribute, int cbAttribute);
+
     /// <summary>
     /// Sends a message but gives up after <paramref name="uTimeout"/> ms. The auto-clicker uses it
     /// with WM_NULL to check whether the foreground window's message pump is keeping up; a timeout

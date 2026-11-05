@@ -33,7 +33,11 @@ public sealed class HotkeyCaptureBox : TextBox
         var box = (HotkeyCaptureBox)d;
         if (!box._capturing)
             box.Text = (e.NewValue as HotkeyBinding)?.DisplayName ?? "(none)";
+        box.BindingValueChanged?.Invoke(box, EventArgs.Empty);
     }
+
+    /// <summary>Raised whenever <see cref="BindingValue"/> changes.</summary>
+    public event EventHandler? BindingValueChanged;
 
     private bool _capturing;
 
@@ -58,7 +62,10 @@ public sealed class HotkeyCaptureBox : TextBox
         Text          = "(none)";
         TextAlignment = TextAlignment.Center;
 
+        // Any of these can end a capture; CancelCapture runs once, so the hotkeys resume exactly once.
         LostFocus           += (_, _) => CancelCapture();
+        LostKeyboardFocus   += (_, _) => CancelCapture();
+        Unloaded            += (_, _) => CancelCapture();
     }
 
     // A WPF TextBox swallows the bubbling MouseLeftButtonDown event, so we must
