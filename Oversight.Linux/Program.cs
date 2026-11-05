@@ -24,6 +24,7 @@ public static class Program
         {
             // A throwaway config folder, so the test never touches real settings.
             Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", Directory.CreateTempSubdirectory("oversight-selftest-").FullName);
+            Linux.SelfTest.StartWatchdog();
             if (!X11.Available) { Console.WriteLine("FAIL display: no X display (set DISPLAY)"); return 1; }
             return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
         }

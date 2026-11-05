@@ -15,6 +15,19 @@ namespace Oversight.Linux;
 public static class SelfTest
 {
     private static int _failures;
+    private static volatile string _stage = "starting the UI";
+
+    /// <summary>Prints the header and makes sure a hang shows up as a failure naming the step, not a stuck CI job.</summary>
+    public static void StartWatchdog()
+    {
+        Console.WriteLine($"Oversight {Updater.CurrentVersion} self-test on DISPLAY={Environment.GetEnvironmentVariable("DISPLAY")}");
+        new Thread(() =>
+        {
+            Thread.Sleep(TimeSpan.FromMinutes(2));
+            Console.WriteLine($"FAIL timeout: no result after 2 minutes, stuck {_stage}");
+            Environment.Exit(1);
+        }) { IsBackground = true }.Start();
+    }
 
     private static void Report(bool ok, string check, string detail)
     {
@@ -24,20 +37,24 @@ public static class SelfTest
 
     public static async Task<int> RunAsync()
     {
-        Console.WriteLine($"Oversight {Updater.CurrentVersion} self-test on DISPLAY={Environment.GetEnvironmentVariable("DISPLAY")}");
         try
         {
+            _stage = "checking settings";
             Settings();
             nint d = X11.Display;
             if (d == 0) Report(false, "display", "no X display");
             else
             {
+                _stage = "checking hotkeys";
                 await Hotkey(d);
+                _stage = "checking the crosshair";
                 await Crosshair(d);
+                _stage = "checking click and focus";
                 await ClickAndFocus(d);
             }
         }
         catch (Exception ex) { Report(false, "crash", ex.ToString()); }
+        _stage = "shutting down";
         Console.WriteLine(_failures == 0 ? "All checks passed." : $"{_failures} check(s) failed.");
         return _failures == 0 ? 0 : 1;
     }

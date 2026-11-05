@@ -107,6 +107,7 @@ jobs:
           path: Oversight-win-x64.zip
 
   linux:
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
