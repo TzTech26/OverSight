@@ -1,6 +1,3 @@
-using System.Windows.Input;
-using Oversight.Native;
-
 namespace Oversight.Models;
 
 /// <summary>A named auto-clicker save slot: the behaviour plus its start/stop keybind.</summary>
@@ -21,7 +18,7 @@ public class AutoClickerProfile
     {
         // Ctrl+Alt+C — matches the crosshair's Ctrl+Alt+X convention and avoids the
         // commonly-taken Ctrl+Shift combos.
-        Modifiers  = NativeMethods.MOD_CONTROL | NativeMethods.MOD_ALT,
-        VirtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.C),
+        Modifiers  = VirtualKeys.MOD_CONTROL | VirtualKeys.MOD_ALT,
+        VirtualKey = VirtualKeys.VK_C,
     };
 }

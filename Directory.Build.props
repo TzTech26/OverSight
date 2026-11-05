@@ -1,0 +1,9 @@
+<Project>
+  <!-- Shared by the Windows app, the Linux app and the core library. Release builds override Version from the git tag. -->
+  <PropertyGroup>
+    <Version>2.4.0</Version>
+    <Product>Oversight</Product>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+</Project>

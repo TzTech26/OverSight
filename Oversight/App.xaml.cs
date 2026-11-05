@@ -178,22 +178,8 @@ public partial class App : Application
         base.OnExit(e);
     }
 
-    /// <summary>
-    /// Appends an unhandled exception to error.log in the config folder (trimmed to the last
-    /// ~256 KB) so problems swallowed by the keep-alive handler can still be diagnosed. Never throws.
-    /// </summary>
-    internal static void LogError(object? error)
-    {
-        try
-        {
-            System.Diagnostics.Debug.WriteLine($"[App] unhandled: {error}");
-            var path = Path.Combine(ConfigStore.ConfigDirectory, "error.log");
-            Directory.CreateDirectory(ConfigStore.ConfigDirectory);
-            if (File.Exists(path) && new FileInfo(path).Length > 256 * 1024) File.Delete(path);
-            File.AppendAllText(path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {error}{Environment.NewLine}{Environment.NewLine}");
-        }
-        catch { /* logging must never take the app down */ }
-    }
+    /// <summary>Appends an unhandled exception to error.log in the config folder. Never throws.</summary>
+    internal static void LogError(object? error) => ErrorLog.Write(error);
 
     /// <summary>Best-effort stop of the auto-clicker from a crash / exit handler; never throws.</summary>
     private void TryStopAutoClicker()

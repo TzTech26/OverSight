@@ -1,7 +1,5 @@
 using System.Text;
 using System.Text.Json.Serialization;
-using System.Windows.Input;
-using Oversight.Native;
 
 namespace Oversight.Models;
 
@@ -31,10 +29,10 @@ public class HotkeyBinding
     {
         if (vk == 0) return "(none)";
         var sb = new StringBuilder();
-        if ((modifiers & NativeMethods.MOD_CONTROL) != 0) sb.Append("Ctrl+");
-        if ((modifiers & NativeMethods.MOD_ALT)     != 0) sb.Append("Alt+");
-        if ((modifiers & NativeMethods.MOD_SHIFT)   != 0) sb.Append("Shift+");
-        if ((modifiers & NativeMethods.MOD_WIN)     != 0) sb.Append("Win+");
+        if ((modifiers & VirtualKeys.MOD_CONTROL) != 0) sb.Append("Ctrl+");
+        if ((modifiers & VirtualKeys.MOD_ALT)     != 0) sb.Append("Alt+");
+        if ((modifiers & VirtualKeys.MOD_SHIFT)   != 0) sb.Append("Shift+");
+        if ((modifiers & VirtualKeys.MOD_WIN)     != 0) sb.Append("Win+");
 
         string? mouse = vk switch
         {
@@ -51,22 +49,7 @@ public class HotkeyBinding
             return sb.ToString();
         }
 
-        var key = KeyInterop.KeyFromVirtualKey((int)vk);
-        sb.Append(key switch
-        {
-            Key.None                         => $"VK_0x{vk:X2}",
-            Key.OemPlus                      => "=",
-            Key.OemMinus                     => "-",
-            Key.Oem3                         => "`",
-            Key.Next                         => "PageDown",
-            Key.Prior                        => "PageUp",
-            Key.Return                       => "Enter",
-            Key.Capital                      => "CapsLock",
-            Key.Escape                       => "Esc",
-            >= Key.D0 and <= Key.D9          => $"{key - Key.D0}",
-            >= Key.NumPad0 and <= Key.NumPad9 => $"Num {key - Key.NumPad0}",
-            _                                => key.ToString(),
-        });
+        sb.Append(VirtualKeys.Name(vk));
         return sb.ToString();
     }
 }

@@ -1,4 +1,3 @@
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Oversight.Models;
@@ -15,7 +14,7 @@ namespace Oversight.Services;
 /// instance rather than swapping references. The slot lists keep independent objects per
 /// profile; the active slots are re-synced from the live instance on every <see cref="Save"/>.</para>
 ///
-/// <para><b>Migration.</b> The config lives in %APPDATA%\Oversight. On first run the store
+/// <para><b>Migration.</b> The config lives in %APPDATA%\Oversight (~/.config/Oversight on Linux). On first run the store
 /// looks for the old %APPDATA%\ScreenZoom\settings.json (schema v2/v3, or the original bare
 /// settings blob) and converts it: old profiles become zoom slots, the built-in crosshair
 /// presets are seeded as crosshair slots, and the old auto-switch rules carry over.</para>
@@ -93,8 +92,8 @@ public sealed class ConfigStore
 
     private static HotkeyBinding DefaultOpenSettingsHotkey() => new()
     {
-        Modifiers  = Native.NativeMethods.MOD_CONTROL | Native.NativeMethods.MOD_ALT,
-        VirtualKey = (uint)System.Windows.Input.KeyInterop.VirtualKeyFromKey(System.Windows.Input.Key.Z),
+        Modifiers  = VirtualKeys.MOD_CONTROL | VirtualKeys.MOD_ALT,
+        VirtualKey = VirtualKeys.VK_Z,
     };
 
     // ── Load ───────────────────────────────────────────────────────────────────
@@ -123,7 +122,7 @@ public sealed class ConfigStore
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ConfigStore] Load failed: {ex.Message}");
-            App.LogError(ex);
+            ErrorLog.Write(ex);
             // The next Save overwrites settings.json with defaults, so keep the unreadable file.
             try { if (File.Exists(ConfigPath)) File.Copy(ConfigPath, ConfigPath + ".bad", overwrite: true); }
             catch (Exception copyEx) { System.Diagnostics.Debug.WriteLine($"[ConfigStore] Backup failed: {copyEx.Message}"); }

@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -13,13 +14,22 @@ public sealed record UpdateInfo(Version Version, string Tag, string PageUrl, str
 
 /// <summary>
 /// Updates from the project's GitHub Releases (same scheme as Roamwise). Downloads only from github.com, checks the
-/// SHA-256 published with the release, swaps Oversight.exe in place (a running exe can be renamed) and restarts.
+/// SHA-256 published with the release, swaps the program file in place (a running program can be renamed on Windows
+/// and Linux) and restarts. Windows releases are a zip holding Oversight.exe; Linux releases are the AppImage itself.
 /// </summary>
 public sealed class Updater
 {
     public const string Repo = "TzTech26/OverSight";
     public static readonly string ReleasesPage = $"https://github.com/{Repo}/releases";
-    private const string AssetName = "Oversight-win-x64.zip";
+
+    private static string Arch => RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "arm64" : "x64";
+
+    private static string AssetName => OperatingSystem.IsWindows() ? "Oversight-win-x64.zip" : $"Oversight-linux-{Arch}.AppImage";
+
+    /// <summary>The file an update replaces: the exe on Windows, the AppImage on Linux.</summary>
+    private static string? TargetPath => OperatingSystem.IsWindows()
+        ? Environment.ProcessPath
+        : Environment.GetEnvironmentVariable("APPIMAGE") is { Length: > 0 } appImage ? appImage : null;
 
     private readonly ConfigStore _config;
 
@@ -33,9 +43,12 @@ public sealed class Updater
 
     public Updater(ConfigStore config) => _config = config;
 
-    /// <summary>Only the published single-file exe can replace itself; a dev build (Oversight.dll beside it) can't.</summary>
-    public static bool CanSelfUpdate => Environment.ProcessPath is string exe && !AppProfile.IsIsolated
-        && !File.Exists(Path.Combine(Path.GetDirectoryName(exe)!, "Oversight.dll"));
+    /// <summary>
+    /// Only the published single-file exe (Windows) or an AppImage (Linux) can replace itself; a dev build (Oversight.dll
+    /// beside the exe) or a bare Linux binary can't.
+    /// </summary>
+    public static bool CanSelfUpdate => TargetPath is string target && !AppProfile.IsIsolated
+        && (!OperatingSystem.IsWindows() || !File.Exists(Path.Combine(Path.GetDirectoryName(target)!, "Oversight.dll")));
 
     /// <summary>Appends a line to update.log in the config folder (kept small). Never throws.</summary>
     public static void Log(string line)
@@ -53,8 +66,8 @@ public sealed class Updater
     /// <summary>Removes the previous copy left behind by an update.</summary>
     public static void CleanUpAfterUpdate()
     {
-        if (Environment.ProcessPath is not string exe) return;
-        foreach (string old in Directory.EnumerateFiles(Path.GetDirectoryName(exe)!, Path.GetFileName(exe) + ".old*"))
+        if (TargetPath is not string target) return;
+        foreach (string old in Directory.EnumerateFiles(Path.GetDirectoryName(target)!, Path.GetFileName(target) + ".old*"))
             try { File.Delete(old); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
@@ -106,11 +119,13 @@ public sealed class Updater
         }
     }
 
-    /// <summary>Downloads, verifies and swaps in the new exe, then starts it. Returns an error sentence on failure.</summary>
+    /// <summary>Downloads, verifies and swaps in the new copy, then starts it. Returns an error sentence on failure.</summary>
     public async Task<string?> InstallAsync(UpdateInfo update, CancellationToken ct = default)
     {
-        if (!CanSelfUpdate || Environment.ProcessPath is not string target)
-            return "This copy of Oversight was built from source, so it can't update itself. Download the release instead.";
+        if (!CanSelfUpdate || TargetPath is not string target)
+            return OperatingSystem.IsWindows()
+                ? "This copy of Oversight was built from source, so it can't update itself. Download the release instead."
+                : "This copy of Oversight isn't running from its AppImage, so it can't update itself. Download the release instead.";
         if (!IsGitHub(update.ZipUrl) || update.SumsUrl is null || !IsGitHub(update.SumsUrl))
             return "This release has no checksum file on GitHub, so Oversight won't install it automatically.";
 
@@ -122,7 +137,7 @@ public sealed class Updater
             using (var http = Client())
             using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct))
             {
-                // The ~80 MB zip streams to disk; a slow connection gets 10 minutes, not HttpClient's per-request cap.
+                // The ~80 MB download streams to disk; a slow connection gets 10 minutes, not HttpClient's per-request cap.
                 http.Timeout = Timeout.InfiniteTimeSpan;
                 timeout.CancelAfter(TimeSpan.FromMinutes(10));
                 using (var response = await http.GetAsync(update.ZipUrl, HttpCompletionOption.ResponseHeadersRead, timeout.Token))
@@ -142,18 +157,27 @@ public sealed class Updater
                     return "The download didn't match the published checksum, so it wasn't installed.";
             }
 
-            string extracted = Path.Combine(work, "out");
-            if (Directory.Exists(extracted)) Directory.Delete(extracted, true);
-            ZipFile.ExtractToDirectory(download, extracted);
-            string newCopy = Path.Combine(extracted, "Oversight.exe");
-            if (!File.Exists(newCopy)) return "The download didn't contain Oversight.exe.";
+            string newCopy = download;
+            if (OperatingSystem.IsWindows())
+            {
+                string extracted = Path.Combine(work, "out");
+                if (Directory.Exists(extracted)) Directory.Delete(extracted, true);
+                ZipFile.ExtractToDirectory(download, extracted);
+                newCopy = Path.Combine(extracted, "Oversight.exe");
+                if (!File.Exists(newCopy)) return "The download didn't contain Oversight.exe.";
+            }
 
-            // The running exe can be renamed but not overwritten. A previous copy that's still running can't be
+            // The running copy can be renamed but not overwritten. A previous copy that's still running can't be
             // deleted either, so it moves aside and goes at the next start.
             try { File.Delete(target + ".old"); }
             catch (UnauthorizedAccessException) { File.Move(target + ".old", $"{target}.old-{Guid.NewGuid():N}"); }
             File.Move(target, target + ".old");
-            try { File.Copy(newCopy, target); }
+            try
+            {
+                File.Copy(newCopy, target);
+                if (!OperatingSystem.IsWindows())
+                    File.SetUnixFileMode(target, File.GetUnixFileMode(target + ".old") | UnixFileMode.UserExecute);
+            }
             catch { File.Move(target + ".old", target, overwrite: true); throw; }
 
             // The new copy waits for this one to exit before taking the single-instance lock and the hotkeys.
@@ -163,7 +187,9 @@ public sealed class Updater
                 // Windows refused to run the new copy (Smart App Control, antivirus): put this one back.
                 File.Delete(target);
                 File.Move(target + ".old", target);
-                return $"Windows blocked the new version from starting, so Oversight kept {CurrentVersion}.";
+                return OperatingSystem.IsWindows()
+                    ? $"Windows blocked the new version from starting, so Oversight kept {CurrentVersion}."
+                    : $"The new version didn't start, so Oversight kept {CurrentVersion}.";
             }
             Log($"{CurrentVersion}: started {update.Version}, quitting.");
             QuitRequested?.Invoke();

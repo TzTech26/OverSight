@@ -1,6 +1,3 @@
-using System.Windows.Input;
-using Oversight.Native;
-
 namespace Oversight.Models;
 
 /// <summary>A named crosshair save slot: the style plus its show/hide keybind.</summary>
@@ -25,7 +22,7 @@ public class CrosshairProfile
     public static HotkeyBinding DefaultToggleHotkey() => new()
     {
         // Ctrl+Alt+X — Ctrl+Shift+X is commonly taken by other tools.
-        Modifiers  = NativeMethods.MOD_CONTROL | NativeMethods.MOD_ALT,
-        VirtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.X),
+        Modifiers  = VirtualKeys.MOD_CONTROL | VirtualKeys.MOD_ALT,
+        VirtualKey = VirtualKeys.VK_X,
     };
 }

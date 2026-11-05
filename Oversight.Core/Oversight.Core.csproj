@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Shared by the Windows and Linux apps: settings and save slots, the isolated profile, error log and updates. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Oversight</RootNamespace>
+    <AssemblyName>Oversight.Core</AssemblyName>
+  </PropertyGroup>
+
+</Project>

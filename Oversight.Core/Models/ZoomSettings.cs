@@ -1,6 +1,3 @@
-using System.Windows.Input;
-using Oversight.Native;
-
 namespace Oversight.Models;
 
 /// <summary>
@@ -15,9 +12,9 @@ public class ZoomSettings
     public Dictionary<string, HotkeyBinding> Hotkeys { get; set; } = new()
     {
         // Not F12: Windows reserves it for debuggers, so registering it fails on many PCs.
-        ["ToggleZoom"] = new HotkeyBinding { Modifiers = 0,                        VirtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.F8) },
-        ["ZoomIn"]     = new HotkeyBinding { Modifiers = NativeMethods.MOD_CONTROL, VirtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.OemPlus) },
-        ["ZoomOut"]    = new HotkeyBinding { Modifiers = NativeMethods.MOD_CONTROL, VirtualKey = (uint)KeyInterop.VirtualKeyFromKey(Key.OemMinus) },
+        ["ToggleZoom"] = new HotkeyBinding { Modifiers = 0,                        VirtualKey = VirtualKeys.VK_F8 },
+        ["ZoomIn"]     = new HotkeyBinding { Modifiers = VirtualKeys.MOD_CONTROL, VirtualKey = VirtualKeys.VK_OEM_PLUS },
+        ["ZoomOut"]    = new HotkeyBinding { Modifiers = VirtualKeys.MOD_CONTROL, VirtualKey = VirtualKeys.VK_OEM_MINUS },
     };
 
     // ── Zoom ──────────────────────────────────────────────────────────────────

@@ -5,19 +5,15 @@
     <SupportedOSPlatformVersion>10.0.22000.0</SupportedOSPlatformVersion>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Oversight</RootNamespace>
     <AssemblyName>Oversight</AssemblyName>
-    <Product>Oversight</Product>
     <AssemblyTitle>Oversight</AssemblyTitle>
-    <Version>2.4.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- Releases ship as one self-contained exe that can replace itself (see Services/Updater.cs). -->
+    <!-- Releases ship as one self-contained exe that can replace itself (see Oversight.Core/Services/Updater.cs). -->
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
@@ -29,5 +25,9 @@
   <ItemGroup>
     <!-- Embedded so the WPF window can load it via a pack URI for its title-bar/taskbar icon -->
     <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Oversight.Core\Oversight.Core.csproj" />
   </ItemGroup>
 </Project>
